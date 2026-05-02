@@ -13,6 +13,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Explore',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="compass-outline" size={size} color={color} />
           ),

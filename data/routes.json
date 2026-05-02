@@ -11,8 +11,20 @@
         "length_mi": 1.4,
         "rating": 4.6,
         "beginner_friendly": true,
-        "tags": ["scenic", "low-traffic"],
-        "active_riders": 12
+        "tags": ["Scenic", "Day"],
+        "active_riders": 12,
+        "image": "https://images.unsplash.com/photo-1517649763962-0c623066013b?w=600&q=70",
+        "start_label": "Today | 1:00 PM",
+        "start_location": "Bicycle Kitchen",
+        "end_location": "Heliotrope Loop",
+        "distance_label": "2k",
+        "attendee_count": 12,
+        "attendee_avatars": [
+          "https://i.pravatar.cc/80?img=11",
+          "https://i.pravatar.cc/80?img=12",
+          "https://i.pravatar.cc/80?img=13"
+        ],
+        "is_active": true
       },
       "geometry": {
         "type": "LineString",
@@ -22,6 +34,145 @@
           [-118.2920, 34.0950],
           [-118.2920, 34.0928],
           [-118.2871, 34.0928]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "rt-melrose-mellow",
+      "properties": {
+        "id": "rt-melrose-mellow",
+        "name": "Melrose Mellow",
+        "created_by": "Diego",
+        "length_mi": 2.1,
+        "rating": 4.2,
+        "beginner_friendly": true,
+        "tags": ["Scenic", "Day"],
+        "active_riders": 2,
+        "image": "https://images.unsplash.com/photo-1502744688674-c619d1586c9e?w=600&q=70",
+        "start_label": "Today | 4:30 PM",
+        "start_location": "Melrose Ave",
+        "end_location": "Vermont Ave",
+        "distance_label": "3k",
+        "attendee_count": 5,
+        "attendee_avatars": [
+          "https://i.pravatar.cc/80?img=14",
+          "https://i.pravatar.cc/80?img=15",
+          "https://i.pravatar.cc/80?img=16"
+        ],
+        "is_active": false
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-118.2820, 34.0838],
+          [-118.2870, 34.0838],
+          [-118.2940, 34.0838],
+          [-118.3000, 34.0838]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "rt-sunset-cruise",
+      "properties": {
+        "id": "rt-sunset-cruise",
+        "name": "Sunset Cruise",
+        "created_by": "Aisha",
+        "length_mi": 3.4,
+        "rating": 4.8,
+        "beginner_friendly": true,
+        "tags": ["Scenic", "Night"],
+        "active_riders": 28,
+        "image": "https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=600&q=70",
+        "start_label": "Today | 7:00 PM",
+        "start_location": "Sunset Blvd",
+        "end_location": "Echo Park Lake",
+        "distance_label": "5k",
+        "attendee_count": 23,
+        "attendee_avatars": [
+          "https://i.pravatar.cc/80?img=17",
+          "https://i.pravatar.cc/80?img=18",
+          "https://i.pravatar.cc/80?img=19"
+        ],
+        "is_active": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-118.2780, 34.0975],
+          [-118.2860, 34.0985],
+          [-118.2940, 34.0985],
+          [-118.3020, 34.0975]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "rt-fountain-flyer",
+      "properties": {
+        "id": "rt-fountain-flyer",
+        "name": "Fountain Flyer",
+        "created_by": "Jess",
+        "length_mi": 2.7,
+        "rating": 4.4,
+        "beginner_friendly": true,
+        "tags": ["Day"],
+        "active_riders": 42,
+        "image": "https://images.unsplash.com/photo-1473773508845-188df298d2d1?w=600&q=70",
+        "start_label": "Tomorrow | 8:00 AM",
+        "start_location": "Fountain Ave",
+        "end_location": "Hollywood Blvd",
+        "distance_label": "4k",
+        "attendee_count": 8,
+        "attendee_avatars": [
+          "https://i.pravatar.cc/80?img=20",
+          "https://i.pravatar.cc/80?img=21",
+          "https://i.pravatar.cc/80?img=22"
+        ],
+        "is_active": false
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-118.2780, 34.0905],
+          [-118.2860, 34.0905],
+          [-118.2940, 34.0905],
+          [-118.3020, 34.0905]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "rt-heliotrope-hop",
+      "properties": {
+        "id": "rt-heliotrope-hop",
+        "name": "Heliotrope Hop",
+        "created_by": "Sam",
+        "length_mi": 0.9,
+        "rating": 4.0,
+        "beginner_friendly": true,
+        "tags": ["Scenic", "Day"],
+        "active_riders": 18,
+        "image": "https://images.unsplash.com/photo-1541625602330-2277a4c46182?w=600&q=70",
+        "start_label": "Today | 2:30 PM",
+        "start_location": "Heliotrope Dr",
+        "end_location": "Santa Monica Blvd",
+        "distance_label": "1k",
+        "attendee_count": 4,
+        "attendee_avatars": [
+          "https://i.pravatar.cc/80?img=23",
+          "https://i.pravatar.cc/80?img=24",
+          "https://i.pravatar.cc/80?img=25"
+        ],
+        "is_active": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-118.2945, 34.0870],
+          [-118.2945, 34.0915],
+          [-118.2945, 34.0960]
         ]
       }
     }

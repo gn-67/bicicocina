@@ -13,4 +13,12 @@ export type Route = {
   beginner_friendly: boolean;
   tags: string[];
   active_riders: number;
+  image: string;
+  start_label: string;
+  start_location: string;
+  end_location: string;
+  distance_label: string;
+  attendee_count: number;
+  attendee_avatars: string[];
+  is_active: boolean;
 };
