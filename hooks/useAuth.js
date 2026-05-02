@@ -18,5 +18,31 @@ export function useAuth() {
     return () => subscription.unsubscribe();
   }, []);
 
-  return { user, loading };
+  async function signUp(email, password, displayName) {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { display_name: displayName },
+      },
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  async function signIn(email, password) {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  async function signOut() {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+  }
+
+  return { user, loading, signUp, signIn, signOut };
 }
