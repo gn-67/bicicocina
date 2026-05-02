@@ -1,10 +1,15 @@
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { useState } from 'react';
 
 const FILTERS = ['All', 'Scenic', 'Quickest-but-safe', 'Beginner', 'Bike Lane Only'];
 
-export default function FilterBar() {
+export default function FilterBar({ onFilterChange }) {
   const [active, setActive] = useState('All');
+
+  function handlePress(filter) {
+    setActive(filter);
+    if (onFilterChange) onFilterChange(filter);
+  }
 
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.container}>
@@ -12,7 +17,7 @@ export default function FilterBar() {
         <Pressable
           key={filter}
           style={[styles.chip, active === filter && styles.chipActive]}
-          onPress={() => setActive(filter)}
+          onPress={() => handlePress(filter)}
         >
           <Text style={[styles.chipText, active === filter && styles.chipTextActive]}>
             {filter}
