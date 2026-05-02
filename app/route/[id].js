@@ -13,6 +13,7 @@ import { useRoutes } from '../../hooks/useRoutes';
 import { useRatings } from '../../hooks/useRatings';
 import { useAuth } from '../../hooks/useAuth';
 import routesGeoJSON from '../../data/routes.json';
+import bikelanes from '../../data/bikelanes-la.json';
 
 const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
 if (MAPBOX_TOKEN) Mapbox.setAccessToken(MAPBOX_TOKEN);
@@ -133,7 +134,8 @@ export default function RouteDetailScreen() {
           {MAPBOX_TOKEN ? (
             <MapboxMap
               style={{ width: CARD_W, height: MAP_H }}
-              styleURL={Mapbox.StyleURL.Street}
+              styleURL={Mapbox.StyleURL.Light}
+              minZoomLevel={9}
               scrollEnabled={false}
               zoomEnabled={false}
               rotateEnabled={false}
@@ -148,11 +150,26 @@ export default function RouteDetailScreen() {
               ) : (
                 <Camera centerCoordinate={[-118.2871, 34.0928]} zoomLevel={13} animationMode="none" animationDuration={0} />
               )}
+              {/* Bike lane network */}
+              <ShapeSource id="detail-bikelanes-src" shape={bikelanes}>
+                <LineLayer
+                  id="detail-bikelanes-line"
+                  style={{
+                    lineColor: ['match', ['get', 'class'], 1, '#f97316', 2, '#f97316', 3, '#fb923c', 4, '#ea580c', '#f97316'],
+                    lineWidth: ['match', ['get', 'class'], 1, 2.5, 2, 2, 3, 1.5, 4, 3, 2],
+                    lineCap: 'round',
+                    lineJoin: 'round',
+                    lineOpacity: 0.85,
+                  }}
+                />
+              </ShapeSource>
+
+              {/* Route — light blue on top */}
               {routeLineGeoJSON && (
                 <ShapeSource id="detail-route-src" shape={routeLineGeoJSON}>
                   <LineLayer
                     id="detail-route-line"
-                    style={{ lineColor: '#f97316', lineWidth: 5, lineCap: 'round', lineJoin: 'round' }}
+                    style={{ lineColor: '#60a5fa', lineWidth: 5, lineCap: 'round', lineJoin: 'round' }}
                   />
                 </ShapeSource>
               )}

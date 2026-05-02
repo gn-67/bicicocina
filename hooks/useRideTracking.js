@@ -22,6 +22,7 @@ export function useRideTracking() {
   const [stats, setStats] = useState(null);
   const [liveDistanceMi, setLiveDistanceMi] = useState(0);
   const [rideStartTime, setRideStartTime] = useState(null);
+  const [liveCoords, setLiveCoords] = useState(null);
   const pointsRef = useRef([]);
   const startTimeRef = useRef(null);
 
@@ -39,6 +40,7 @@ export function useRideTracking() {
 
     // Start continuous location tracking
     await startTracking((coords) => {
+      setLiveCoords({ latitude: coords.latitude, longitude: coords.longitude });
       const newPoint = {
         latitude: coords.latitude,
         longitude: coords.longitude,
@@ -168,6 +170,7 @@ export function useRideTracking() {
     isRiding,
     stats,
     liveDistanceMi,
+    liveCoords,
     rideStartTime,
     startRide,
     endRide,

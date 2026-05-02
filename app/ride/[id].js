@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { View, Text, Pressable, Alert, StyleSheet, Dimensions } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
+import * as Location from 'expo-location';
 import Mapbox, {
   Camera,
   LineLayer,
@@ -10,7 +11,10 @@ import Mapbox, {
 } from '@rnmapbox/maps';
 
 import routes from '../../data/routes.json';
+import bikelanes from '../../data/bikelanes-la.json';
 import { useRideTracking } from '../../hooks/useRideTracking';
+import { useVoiceNav } from '../../hooks/useVoiceNav';
+import { useBikeLaneNav } from '../../hooks/useBikeLaneNav';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 
@@ -30,7 +34,9 @@ function formatElapsed(startTime) {
 
 export default function LiveRideScreen() {
   const { id } = useLocalSearchParams();
-  const { startRide, endRide, liveDistanceMi, rideStartTime } = useRideTracking();
+  const { startRide, endRide, liveDistanceMi, liveCoords, rideStartTime } = useRideTracking();
+  const { speak } = useVoiceNav();
+  const { checkPosition, getStartMessage, bannerText, laneStatus } = useBikeLaneNav({ speak });
   const [elapsed, setElapsed] = useState('0:00');
   const timerRef = useRef(null);
 
@@ -61,6 +67,20 @@ export default function LiveRideScreen() {
     return () => clearInterval(timerRef.current);
   }, [rideStartTime]);
 
+  // Play starting announcement once ride begins
+  useEffect(() => {
+    if (!rideStartTime) return;
+    Location.getCurrentPositionAsync({}).then((loc) => {
+      const msg = getStartMessage({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
+      speak(msg);
+    }).catch(() => {});
+  }, [rideStartTime]);
+
+  // Check proximity to bike lanes on each GPS update
+  useEffect(() => {
+    if (liveCoords) checkPosition(liveCoords);
+  }, [liveCoords]);
+
   async function handleEndRide() {
     if (timerRef.current) clearInterval(timerRef.current);
     const summary = await endRide();
@@ -85,7 +105,7 @@ export default function LiveRideScreen() {
 
   return (
     <View style={styles.container}>
-      <MapboxMap style={styles.map} styleURL={Mapbox.StyleURL.Street}>
+      <MapboxMap style={styles.map} styleURL={Mapbox.StyleURL.Light} minZoomLevel={9}>
         <Camera
           followUserLocation={true}
           followZoomLevel={16}
@@ -93,13 +113,28 @@ export default function LiveRideScreen() {
         />
         <UserLocation visible={true} />
 
+        {/* Bike lane network */}
+        <ShapeSource id="live-bikelanes-src" shape={bikelanes}>
+          <LineLayer
+            id="live-bikelanes-line"
+            style={{
+              lineColor: ['match', ['get', 'class'], 1, '#f97316', 2, '#f97316', 3, '#fb923c', 4, '#ea580c', '#f97316'],
+              lineWidth: ['match', ['get', 'class'], 1, 2.5, 2, 2, 3, 1.5, 4, 3, 2],
+              lineCap: 'round',
+              lineJoin: 'round',
+              lineOpacity: 0.85,
+            }}
+          />
+        </ShapeSource>
+
+        {/* Active route — light blue on top */}
         {routeGeoJSON && (
           <ShapeSource id="live-route-src" shape={routeGeoJSON}>
             <LineLayer
               id="live-route-line"
               style={{
-                lineColor: '#f97316',
-                lineWidth: 4,
+                lineColor: '#60a5fa',
+                lineWidth: 5,
                 lineCap: 'round',
                 lineJoin: 'round',
               }}
@@ -107,6 +142,13 @@ export default function LiveRideScreen() {
           </ShapeSource>
         )}
       </MapboxMap>
+
+      {/* Bike lane navigation banner */}
+      {bannerText ? (
+        <View style={[styles.banner, laneStatus === 'on_lane' && styles.bannerGreen]}>
+          <Text style={styles.bannerText}>{bannerText}</Text>
+        </View>
+      ) : null}
 
       {/* Stats HUD */}
       <View style={styles.hud}>
@@ -149,4 +191,24 @@ const styles = StyleSheet.create({
     borderRadius: 32,
   },
   endButtonText: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  banner: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    paddingTop: 52,
+    paddingBottom: 12,
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(0,0,0,0.72)',
+    alignItems: 'center',
+  },
+  bannerGreen: {
+    backgroundColor: '#16a34a',
+  },
+  bannerText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
 });
