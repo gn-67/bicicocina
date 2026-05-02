@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
+import { DEMO_USER_ID } from '../lib/constants';
 
 export function useActiveRides() {
   const [rides, setRides] = useState([]);
@@ -49,14 +50,11 @@ export function useActiveRides() {
   }, [fetchActiveRides]);
 
   async function createActiveRide(routeId, startTime, meetingPoint) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Must be signed in');
-
     const { data, error: insertError } = await supabase
       .from('active_rides')
       .insert({
         route_id: routeId,
-        leader_id: user.id,
+        leader_id: DEMO_USER_ID,
         start_time: startTime,
         meeting_point: meetingPoint,
       })
@@ -68,14 +66,11 @@ export function useActiveRides() {
   }
 
   async function joinRide(rideId) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Must be signed in');
-
     const { data, error: insertError } = await supabase
       .from('ride_participants')
       .insert({
         ride_id: rideId,
-        user_id: user.id,
+        user_id: DEMO_USER_ID,
       })
       .select()
       .single();

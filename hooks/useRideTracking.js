@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useLocation } from './useLocation';
+import { DEMO_USER_ID } from '../lib/constants';
 
 function haversineDistance(lat1, lon1, lat2, lon2) {
   const R = 3958.8; // Earth radius in miles
@@ -23,14 +24,11 @@ export function useRideTracking() {
   const startTimeRef = useRef(null);
 
   const startRide = useCallback(async (routeId) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Must be signed in to start a ride');
-
     // Create ride_history entry
     const { data, error } = await supabase
       .from('ride_history')
       .insert({
-        user_id: user.id,
+        user_id: DEMO_USER_ID,
         route_id: routeId,
         started_at: new Date().toISOString(),
       })
@@ -122,15 +120,12 @@ export function useRideTracking() {
 
   // Group ride: broadcast position to ride_participants
   const broadcastPosition = useCallback(async (activeRideId, coords) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
     await supabase
       .from('ride_participants')
       .upsert(
         {
           ride_id: activeRideId,
-          user_id: user.id,
+          user_id: DEMO_USER_ID,
           current_lat: coords.latitude,
           current_lng: coords.longitude,
           last_updated: new Date().toISOString(),

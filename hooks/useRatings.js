@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
+import { DEMO_USER_ID } from '../lib/constants';
 
 export function useRatings(routeId) {
   const [ratings, setRatings] = useState([]);
@@ -30,14 +31,11 @@ export function useRatings(routeId) {
   const fetchUserRating = useCallback(async () => {
     if (!routeId) return;
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
     const { data, error: fetchError } = await supabase
       .from('ratings')
       .select('*')
       .eq('route_id', routeId)
-      .eq('user_id', user.id)
+      .eq('user_id', DEMO_USER_ID)
       .maybeSingle();
 
     if (fetchError) {
@@ -48,15 +46,12 @@ export function useRatings(routeId) {
   }, [routeId]);
 
   async function submitRating({ safety, lighting, beginner, scenic, surface, reviewText }) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Must be signed in to rate');
-
     const { data, error: insertError } = await supabase
       .from('ratings')
       .upsert(
         {
           route_id: routeId,
-          user_id: user.id,
+          user_id: DEMO_USER_ID,
           safety,
           lighting,
           beginner,

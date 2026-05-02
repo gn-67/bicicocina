@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
+import { DEMO_USER_ID } from '../lib/constants';
 
 export function useRoutes(filter = 'All') {
   const [routes, setRoutes] = useState([]);
@@ -93,9 +94,6 @@ export function useRoutes(filter = 'All') {
   }
 
   async function createRoute({ name, description, distance, elevation, coordinates, tags }) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Must be signed in to create a route');
-
     const { data, error: insertError } = await supabase
       .from('routes')
       .insert({
@@ -105,7 +103,7 @@ export function useRoutes(filter = 'All') {
         elevation,
         coordinates,
         tags,
-        created_by: user.id,
+        created_by: DEMO_USER_ID,
       })
       .select()
       .single();
