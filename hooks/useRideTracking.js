@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useLocation } from './useLocation';
-import { DEMO_USER_ID } from '../lib/constants';
+
 
 function haversineDistance(lat1, lon1, lat2, lon2) {
   const R = 3958.8; // Earth radius in miles
@@ -26,20 +26,10 @@ export function useRideTracking() {
   const startTimeRef = useRef(null);
 
   const startRide = useCallback(async (routeId) => {
-    // Create ride_history entry
-    const { data, error } = await supabase
-      .from('ride_history')
-      .insert({
-        user_id: DEMO_USER_ID,
-        route_id: routeId,
-        started_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
+    // Demo mode: use a local ID, no Supabase insert required
+    const rideDbId = `local-${Date.now()}`;
 
-    if (error) throw error;
-
-    setRideId(data.id);
+    setRideId(rideDbId);
     setIsRiding(true);
     setLiveDistanceMi(0);
     pointsRef.current = [];
@@ -63,7 +53,7 @@ export function useRideTracking() {
       pointsRef.current.push(newPoint);
     });
 
-    return data.id;
+    return rideDbId;
   }, [startTracking]);
 
   const endRide = useCallback(async () => {
@@ -112,17 +102,19 @@ export function useRideTracking() {
       durationMin: Math.round(durationMin),
     };
 
-    // Update ride_history
-    await supabase
-      .from('ride_history')
-      .update({
-        completed_at: new Date().toISOString(),
-        distance: summary.distance,
-        pace: summary.pace,
-        elevation: summary.elevation,
-        calories: summary.calories,
-      })
-      .eq('id', rideId);
+    // Update ride_history (skipped in demo mode when rideId is a local fallback)
+    if (rideId && !rideId.startsWith('local-')) {
+      await supabase
+        .from('ride_history')
+        .update({
+          completed_at: new Date().toISOString(),
+          distance: summary.distance,
+          pace: summary.pace,
+          elevation: summary.elevation,
+          calories: summary.calories,
+        })
+        .eq('id', rideId);
+    }
 
     setStats(summary);
     setRideId(null);
@@ -131,12 +123,15 @@ export function useRideTracking() {
 
   // Group ride: broadcast position to ride_participants
   const broadcastPosition = useCallback(async (activeRideId, coords) => {
+    const { data } = await supabase.auth.getSession();
+    const userId = data?.session?.user?.id;
+    if (!userId) return;
     await supabase
       .from('ride_participants')
       .upsert(
         {
           ride_id: activeRideId,
-          user_id: DEMO_USER_ID,
+          user_id: userId,
           current_lat: coords.latitude,
           current_lng: coords.longitude,
           last_updated: new Date().toISOString(),

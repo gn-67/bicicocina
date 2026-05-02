@@ -1,7 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
 import { View, Text, Pressable, Alert, StyleSheet, Dimensions } from 'react-native';
-
-const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 import { useLocalSearchParams, router } from 'expo-router';
 import Mapbox, {
   Camera,
@@ -13,6 +11,8 @@ import Mapbox, {
 
 import routes from '../../data/routes.json';
 import { useRideTracking } from '../../hooks/useRideTracking';
+
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 
 const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
 
