@@ -62,7 +62,7 @@ Tapping a route card opens the full route page. This is the richest screen in th
 **Sections:**
 - **Map preview**: Shows the route on a map
 - **Route info**: Distance, estimated time, elevation, bike lane coverage
-- **Start Ride button**: Launches turn-by-turn navigation with audio cues
+- **Start Ride button**: Navigates to `app/ride/[id].js` — full-screen live navigation view with camera-following map
 - **Audio cues during ride**: "Bike lane ends in 200 feet", "Protected lane ahead"
 - **Ride completion summary**: Distance, pace, elevation, calories (Strava-style). Optional Strava export.
 - **Structured rating rubric** (post-ride survey):
@@ -135,7 +135,7 @@ Users can also access the review section by scrolling down on any route detail p
 - **Framework**: React Native / Expo (SDK 54)
 - **Routing**: Expo Router (file-based)
 - **Backend**: Supabase (auth, database, real-time, storage)
-- **Maps**: `react-native-maps` + `expo-location`
+- **Maps**: `@rnmapbox/maps` + `expo-location`
 - **Language**: JavaScript (not TypeScript — hackathon speed)
 - **i18n**: Bilingual from day one (English + Spanish) — East Hollywood is heavily Spanish-speaking, and it's literally called La Bicicocina
 
@@ -153,8 +153,10 @@ bicicocina/
 │   │   ├── map.js                # Map tab
 │   │   ├── kitchen.js            # Bicycle Kitchen tab
 │   │   └── profile.js            # Profile tab
-│   └── route/
-│       └── [id].js               # Route detail page
+│   ├── route/
+│   │   └── [id].js               # Route detail page
+│   └── ride/
+│       └── [id].js               # Live navigation screen (full-screen map)
 │
 ├── components/                   # Reusable UI components
 │   ├── RouteCard.js              # Route preview card

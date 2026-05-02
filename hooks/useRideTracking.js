@@ -20,6 +20,8 @@ export function useRideTracking() {
   const [rideId, setRideId] = useState(null);
   const [isRiding, setIsRiding] = useState(false);
   const [stats, setStats] = useState(null);
+  const [liveDistanceMi, setLiveDistanceMi] = useState(0);
+  const [rideStartTime, setRideStartTime] = useState(null);
   const pointsRef = useRef([]);
   const startTimeRef = useRef(null);
 
@@ -39,17 +41,26 @@ export function useRideTracking() {
 
     setRideId(data.id);
     setIsRiding(true);
+    setLiveDistanceMi(0);
     pointsRef.current = [];
-    startTimeRef.current = Date.now();
+    const now = Date.now();
+    startTimeRef.current = now;
+    setRideStartTime(now);
 
     // Start continuous location tracking
     await startTracking((coords) => {
-      pointsRef.current.push({
+      const newPoint = {
         latitude: coords.latitude,
         longitude: coords.longitude,
         altitude: coords.altitude,
         timestamp: Date.now(),
-      });
+      };
+      const prev = pointsRef.current[pointsRef.current.length - 1];
+      if (prev) {
+        const segDist = haversineDistance(prev.latitude, prev.longitude, newPoint.latitude, newPoint.longitude);
+        setLiveDistanceMi((d) => d + segDist);
+      }
+      pointsRef.current.push(newPoint);
     });
 
     return data.id;
@@ -161,6 +172,8 @@ export function useRideTracking() {
     rideId,
     isRiding,
     stats,
+    liveDistanceMi,
+    rideStartTime,
     startRide,
     endRide,
     broadcastPosition,

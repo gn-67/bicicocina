@@ -1,262 +1,253 @@
 import { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable, TextInput, ActivityIndicator, Alert } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
-import RatingStars from '../../components/RatingStars';
+import { View, Text, StyleSheet, Pressable, ActivityIndicator, Dimensions } from 'react-native';
+
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
+import { useLocalSearchParams, router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import Mapbox, {
+  Camera,
+  LineLayer,
+  MapView as MapboxMap,
+  ShapeSource,
+} from '@rnmapbox/maps';
+
+import routes from '../../data/routes.json';
 import { useRoutes } from '../../hooks/useRoutes';
-import { useRatings } from '../../hooks/useRatings';
-import { useRideTracking } from '../../hooks/useRideTracking';
-import { useAuth } from '../../hooks/useAuth';
 
-const RATING_CATEGORIES = ['safety', 'lighting', 'beginner', 'scenic', 'surface'];
+const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
+if (MAPBOX_TOKEN) Mapbox.setAccessToken(MAPBOX_TOKEN);
 
-function CategoryRatingInput({ label, value, onChange }) {
-  return (
-    <View style={styles.categoryRow}>
-      <Text style={styles.categoryLabel}>{label}</Text>
-      <View style={styles.categoryStars}>
-        {[1, 2, 3, 4, 5].map((n) => (
-          <Pressable key={n} onPress={() => onChange(n)}>
-            <Text style={[styles.starButton, n <= value && styles.starButtonActive]}>
-              {n <= value ? '\u2605' : '\u2606'}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-    </View>
-  );
+const FALLBACK_CENTER = [-118.2871, 34.0928];
+
+function getRouteBounds(coordinates) {
+  let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
+  for (const [lng, lat] of coordinates) {
+    if (lng < minLng) minLng = lng;
+    if (lng > maxLng) maxLng = lng;
+    if (lat < minLat) minLat = lat;
+    if (lat > maxLat) maxLat = lat;
+  }
+  return { ne: [maxLng, maxLat], sw: [minLng, minLat] };
 }
 
 export default function RouteDetailScreen() {
   const { id } = useLocalSearchParams();
-  const { user } = useAuth();
+  const insets = useSafeAreaInsets();
   const { fetchRouteById } = useRoutes();
-  const { ratings, fetchRatings, fetchUserRating, userRating, submitRating } = useRatings(id);
-  const { isRiding, startRide, endRide, stats } = useRideTracking();
-
   const [route, setRoute] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showRatingForm, setShowRatingForm] = useState(false);
-  const [ratingForm, setRatingForm] = useState({
-    safety: 0, lighting: 0, beginner: 0, scenic: 0, surface: 0, reviewText: '',
-  });
-  const [submitting, setSubmitting] = useState(false);
+
+  const routeFeature = routes.features.find((f) => f.properties?.id === id) ?? null;
+  const routeGeoJSON = routeFeature
+    ? { type: 'FeatureCollection', features: [routeFeature] }
+    : null;
+  const bounds = routeFeature?.geometry?.coordinates
+    ? getRouteBounds(routeFeature.geometry.coordinates)
+    : null;
 
   useEffect(() => {
-    loadData();
+    fetchRouteById(id)
+      .then(setRoute)
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, [id]);
 
-  async function loadData() {
-    setLoading(true);
-    try {
-      const [routeData] = await Promise.all([
-        fetchRouteById(id),
-        fetchRatings(),
-        fetchUserRating(),
-      ]);
-      setRoute(routeData);
-    } catch (e) {
-      // route not found — keep null
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleStartRide() {
-    try {
-      await startRide(id);
-    } catch (e) {
-      Alert.alert('Error', e.message);
-    }
-  }
-
-  async function handleEndRide() {
-    const summary = await endRide();
-    if (summary) {
-      Alert.alert(
-        'Ride Complete',
-        `Distance: ${summary.distance} mi\nDuration: ${summary.durationMin} min\nCalories: ${summary.calories}\nElevation: ${summary.elevation} ft`
-      );
-    }
-  }
-
-  async function handleSubmitRating() {
-    const incomplete = RATING_CATEGORIES.some((c) => ratingForm[c] === 0);
-    if (incomplete) {
-      Alert.alert('Rate all categories', 'Please rate each category before submitting.');
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      await submitRating(ratingForm);
-      setShowRatingForm(false);
-      setRatingForm({ safety: 0, lighting: 0, beginner: 0, scenic: 0, surface: 0, reviewText: '' });
-      loadData();
-    } catch (e) {
-      Alert.alert('Error', e.message);
-    } finally {
-      setSubmitting(false);
-    }
+  function handleStartRide() {
+    router.push('/ride/' + id);
   }
 
   if (loading) {
     return (
-      <View style={[styles.container, styles.centered]}>
+      <View style={styles.loaderContainer}>
         <ActivityIndicator size="large" color="#2D6A4F" />
       </View>
     );
   }
 
-  if (!route) {
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <Text style={styles.text}>Route not found</Text>
-      </View>
-    );
-  }
-
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>{route.name}</Text>
-      {route.description && <Text style={styles.description}>{route.description}</Text>}
-
-      <View style={styles.metaRow}>
-        {route.distance != null && <Text style={styles.metaText}>{route.distance} mi</Text>}
-        {route.elevation != null && <Text style={styles.metaText}>{route.elevation} ft gain</Text>}
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Overall Rating</Text>
-        <RatingStars rating={route.rating} />
-        <Text style={styles.reviewCount}>{route.reviewCount} review{route.reviewCount !== 1 ? 's' : ''}</Text>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Reviews</Text>
-        {ratings.length === 0 ? (
-          <Text style={styles.text}>No reviews yet — be the first!</Text>
-        ) : (
-          ratings.map((r) => (
-            <View key={r.id} style={styles.reviewItem}>
-              <Text style={styles.reviewAuthor}>{r.profiles?.display_name || 'Anonymous'}</Text>
-              <View style={styles.reviewScores}>
-                {RATING_CATEGORIES.map((c) => (
-                  <Text key={c} style={styles.reviewScore}>{c}: {r[c]}/5</Text>
-                ))}
-              </View>
-              {r.review_text ? <Text style={styles.reviewText}>{r.review_text}</Text> : null}
-            </View>
-          ))
-        )}
-      </View>
-
-      {user && !userRating && !showRatingForm && (
-        <Pressable style={styles.secondaryButton} onPress={() => setShowRatingForm(true)}>
-          <Text style={styles.secondaryButtonText}>Rate This Route</Text>
-        </Pressable>
-      )}
-
-      {showRatingForm && (
-        <View style={styles.ratingForm}>
-          <Text style={styles.sectionTitle}>Your Rating</Text>
-          {RATING_CATEGORIES.map((cat) => (
-            <CategoryRatingInput
-              key={cat}
-              label={cat.charAt(0).toUpperCase() + cat.slice(1)}
-              value={ratingForm[cat]}
-              onChange={(v) => setRatingForm((prev) => ({ ...prev, [cat]: v }))}
+    <View style={styles.container}>
+      {/* ── Full-screen map ── */}
+      {MAPBOX_TOKEN ? (
+        <MapboxMap style={styles.map} styleURL={Mapbox.StyleURL.Street}>
+          {bounds ? (
+            <Camera
+              bounds={{
+                ne: bounds.ne,
+                sw: bounds.sw,
+                paddingTop: 100,
+                paddingBottom: 260,
+                paddingLeft: 32,
+                paddingRight: 32,
+              }}
+              animationMode="none"
+              animationDuration={0}
             />
-          ))}
-          <TextInput
-            style={styles.textInput}
-            placeholder="Write a review (optional)"
-            multiline
-            value={ratingForm.reviewText}
-            onChangeText={(t) => setRatingForm((prev) => ({ ...prev, reviewText: t }))}
-          />
-          <Pressable
-            style={[styles.button, submitting && styles.buttonDisabled]}
-            onPress={handleSubmitRating}
-            disabled={submitting}
-          >
-            <Text style={styles.buttonText}>{submitting ? 'Submitting...' : 'Submit Rating'}</Text>
-          </Pressable>
+          ) : (
+            <Camera
+              centerCoordinate={FALLBACK_CENTER}
+              zoomLevel={13}
+              animationMode="none"
+              animationDuration={0}
+            />
+          )}
+
+          {routeGeoJSON && (
+            <ShapeSource id="route-preview-src" shape={routeGeoJSON}>
+              <LineLayer
+                id="route-preview-line"
+                style={{
+                  lineColor: '#f97316',
+                  lineWidth: 5,
+                  lineCap: 'round',
+                  lineJoin: 'round',
+                }}
+              />
+            </ShapeSource>
+          )}
+        </MapboxMap>
+      ) : (
+        <View style={styles.mapFallback}>
+          <Text style={styles.mapFallbackText}>Map unavailable</Text>
         </View>
       )}
 
-      {stats && (
-        <View style={styles.statsSummary}>
-          <Text style={styles.sectionTitle}>Last Ride Summary</Text>
-          <Text style={styles.statText}>Distance: {stats.distance} mi</Text>
-          <Text style={styles.statText}>Duration: {stats.durationMin} min</Text>
-          <Text style={styles.statText}>Calories: {stats.calories}</Text>
-          <Text style={styles.statText}>Elevation: {stats.elevation} ft</Text>
-        </View>
-      )}
+      {/* ── Top-left: back button ── */}
+      <View style={[styles.topLeft, { top: insets.top + 12 }]}>
+        <Pressable style={styles.darkCircleBtn} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={22} color="#fff" />
+        </Pressable>
+      </View>
 
-      <Pressable
-        style={[styles.button, isRiding && styles.buttonDanger]}
-        onPress={isRiding ? handleEndRide : handleStartRide}
-      >
-        <Text style={styles.buttonText}>{isRiding ? 'End Ride' : 'Start Ride'}</Text>
-      </Pressable>
-    </ScrollView>
+      {/* ── Top-right: utility buttons ── */}
+      <View style={[styles.topRight, { top: insets.top + 12 }]}>
+        <Pressable style={styles.lightCircleBtn}>
+          <Ionicons name="volume-medium-outline" size={20} color="#333" />
+        </Pressable>
+        <Pressable style={[styles.lightCircleBtn, { marginTop: 10 }]}>
+          <Ionicons name="navigate" size={18} color="#333" />
+        </Pressable>
+      </View>
+
+      {/* ── Bottom overlay ── */}
+      <View style={[styles.bottomSheet, { paddingBottom: insets.bottom + 20 }]}>
+        <View style={styles.bottomContent}>
+          <Text style={styles.routeName} numberOfLines={2}>
+            {route?.name ?? id}
+          </Text>
+
+          {(route?.distance != null || route?.elevation != null) && (
+            <View style={styles.metaRow}>
+              {route?.distance != null && (
+                <View style={styles.metaPill}>
+                  <Text style={styles.metaPillText}>{route.distance} mi</Text>
+                </View>
+              )}
+              {route?.elevation != null && (
+                <View style={styles.metaPill}>
+                  <Text style={styles.metaPillText}>{route.elevation} ft gain</Text>
+                </View>
+              )}
+            </View>
+          )}
+        </View>
+
+        <Pressable
+          style={({ pressed }) => [styles.startButton, pressed && styles.startButtonPressed]}
+          onPress={handleStartRide}
+        >
+          <Text style={styles.startButtonText}>Start Route</Text>
+        </Pressable>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  centered: { justifyContent: 'center', alignItems: 'center' },
-  content: { padding: 16, paddingBottom: 40 },
-  title: { fontSize: 24, fontWeight: 'bold', color: '#1B4332', marginBottom: 4 },
-  description: { fontSize: 14, color: '#666', marginBottom: 12 },
-  metaRow: { flexDirection: 'row', gap: 16, marginBottom: 16 },
-  metaText: { fontSize: 14, color: '#52796F', fontWeight: '500' },
-  section: { marginBottom: 24 },
-  sectionTitle: { fontSize: 18, fontWeight: '600', color: '#2D6A4F', marginBottom: 8 },
-  text: { fontSize: 14, color: '#666' },
-  reviewCount: { fontSize: 12, color: '#888', marginTop: 4 },
-  reviewItem: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  reviewAuthor: { fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 4 },
-  reviewScores: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
-  reviewScore: { fontSize: 12, color: '#666', backgroundColor: '#F0F7F4', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
-  reviewText: { fontSize: 14, color: '#444', marginTop: 4 },
-  ratingForm: { marginBottom: 24, padding: 12, backgroundColor: '#F0F7F4', borderRadius: 12 },
-  categoryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  categoryLabel: { fontSize: 14, color: '#333', fontWeight: '500' },
-  categoryStars: { flexDirection: 'row', gap: 4 },
-  starButton: { fontSize: 24, color: '#ccc' },
-  starButtonActive: { color: '#F4A261' },
-  textInput: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 14,
-    minHeight: 80,
-    textAlignVertical: 'top',
-    marginVertical: 8,
-    backgroundColor: '#fff',
+  container: { flex: 1, backgroundColor: '#000' },
+  loaderContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
+
+  map: { width: SCREEN_W, height: SCREEN_H },
+  mapFallback: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#e5e7eb' },
+  mapFallbackText: { color: '#6b7280', fontSize: 14 },
+
+  // Top buttons
+  topLeft: {
+    position: 'absolute',
+    left: 16,
   },
-  button: {
-    backgroundColor: '#2D6A4F',
-    padding: 16,
-    borderRadius: 12,
+  topRight: {
+    position: 'absolute',
+    right: 16,
     alignItems: 'center',
-    marginTop: 16,
   },
-  buttonDanger: { backgroundColor: '#c0392b' },
-  buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: '#fff', fontSize: 18, fontWeight: '600' },
-  secondaryButton: {
-    borderWidth: 1,
-    borderColor: '#2D6A4F',
-    padding: 12,
-    borderRadius: 12,
+  darkCircleBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(40, 40, 40, 0.85)',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
   },
-  secondaryButtonText: { color: '#2D6A4F', fontSize: 16, fontWeight: '500' },
-  statsSummary: { marginBottom: 16, padding: 12, backgroundColor: '#F0F7F4', borderRadius: 12 },
-  statText: { fontSize: 14, color: '#333', marginBottom: 4 },
+  lightCircleBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  // Bottom overlay
+  bottomSheet: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(28, 28, 30, 0.92)',
+    paddingTop: 28,
+    paddingHorizontal: 20,
+  },
+  bottomContent: {
+    marginBottom: 20,
+  },
+  routeName: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: '#fff',
+    letterSpacing: -0.3,
+    marginBottom: 10,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  metaPill: {
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  metaPillText: {
+    color: '#d1d5db',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+
+  // Start button
+  startButton: {
+    backgroundColor: '#e5e7eb',
+    borderRadius: 32,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  startButtonPressed: {
+    backgroundColor: '#d1d5db',
+  },
+  startButtonText: {
+    color: '#111',
+    fontSize: 17,
+    fontWeight: '600',
+    letterSpacing: 0.1,
+  },
 });
