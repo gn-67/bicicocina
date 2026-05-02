@@ -1,0 +1,31 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "bk-heliotrope",
+      "properties": { "BIKEWAY_TYPE": "Class 2" },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-118.2929, 34.0890],
+          [-118.2929, 34.0925],
+          [-118.2929, 34.0960]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "bk-sunset",
+      "properties": { "BIKEWAY_TYPE": "Class 4" },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-118.2960, 34.0975],
+          [-118.2880, 34.0975],
+          [-118.2800, 34.0975]
+        ]
+      }
+    }
+  ]
+}
