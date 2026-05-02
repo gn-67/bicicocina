@@ -1,0 +1,29 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "rt-kitchen-loop",
+      "properties": {
+        "id": "rt-kitchen-loop",
+        "name": "Kitchen Loop",
+        "created_by": "Maria",
+        "length_mi": 1.4,
+        "rating": 4.6,
+        "beginner_friendly": true,
+        "tags": ["scenic", "low-traffic"],
+        "active_riders": 12
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-118.2871, 34.0928],
+          [-118.2871, 34.0950],
+          [-118.2920, 34.0950],
+          [-118.2920, 34.0928],
+          [-118.2871, 34.0928]
+        ]
+      }
+    }
+  ]
+}
