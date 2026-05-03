@@ -222,6 +222,41 @@
           [-118.4983, 34.0087]
         ]
       }
+    },
+    {
+    "type": "Feature",                                                                                                                                                  
+    "id": "rt-echo-park",                                                                                                                                             
+    "properties": {                                                                                                                                                     
+      "id": "rt-echo-park",
+      "name": "Kitchen → Echo Park Lake",                                                                                                                               
+      "created_by": "BiciCocina",                                                                                                                                       
+      "length_mi": 2.4,
+      "rating": 4.3,                                                                                                                                                    
+      "beginner_friendly": true,                                                                                                                                        
+      "tags": ["Scenic", "Safest"],
+      "active_riders": 0,                                                                                                                                               
+      "image": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=70",
+      "start_label": "",                                                                                                                                                
+      "start_location": "Bicycle Kitchen",
+      "end_location": "Echo Park Lake",                                                                                                                                 
+      "distance_label": "2.4 mi",                                                                                                                                       
+      "attendee_count": 0,
+      "attendee_avatars": [],                                                                                                                                           
+      "is_active": false
+    },                                                                                                                                                                  
+    "geometry": {
+      "type": "LineString",                                                                                                                                             
+      "coordinates": [
+        [-118.2871, 34.0928],
+        [-118.2820, 34.0928],
+        [-118.2770, 34.0928],                                                                                                                                           
+        [-118.2770, 34.0870],
+        [-118.2710, 34.0867],                                                                                                                                           
+        [-118.2650, 34.0820],                                                                                                                                           
+        [-118.2621, 34.0800],
+        [-118.2608, 34.0788]                                                                                                                                            
+      ]                                                                                                                                                                 
     }
+  }
   ]
 }
