@@ -35,10 +35,9 @@ export default function TabLayout() {
       <Tabs.Screen
         name="kitchen"
         options={{
-          title: 'Kitchen',
-          headerShown: false,
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="bicycle-outline" size={size} color={color} />
+          title: 'KITCHEN',
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="bicycle" size={24} color={color} />
           ),
         }}
       />
@@ -57,19 +56,14 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    position: 'absolute',
-    bottom: 25,
-    left: 40,
-    right: 40,
     backgroundColor: '#1E1A33',
-    borderRadius: 54,
-    height: 84,
-    paddingBottom: Platform.OS === 'ios' ? 25 : 12,
+    height: 90,
+    paddingBottom: Platform.OS === 'ios' ? 30 : 15,
     paddingTop: 12,
     borderTopWidth: 0,
     elevation: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
   },

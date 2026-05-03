@@ -84,15 +84,13 @@ export default function LiveRideScreen() {
   async function handleEndRide() {
     if (timerRef.current) clearInterval(timerRef.current);
     const summary = await endRide();
-    if (summary) {
-      Alert.alert(
-        'Ride Complete',
-        `Distance: ${summary.distance} mi\nDuration: ${summary.durationMin} min\nCalories: ${summary.calories}\nElevation: ${summary.elevation} ft`,
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
-    } else {
-      router.back();
-    }
+    router.replace({
+      pathname: '/ride/summary',
+      params: { 
+        id, 
+        name: routeFeature?.properties?.name || 'Gayley Avenue - Westwood Avenue' 
+      }
+    });
   }
 
   if (!MAPBOX_TOKEN) {
