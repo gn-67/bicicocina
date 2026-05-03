@@ -19,8 +19,8 @@ function buildGrid(year: number, month: number): (number | null)[] {
 }
 
 type Props = {
-  eventDates?: string[]; // ISO "YYYY-MM-DD"
-  selectedDate?: string | null; // ISO "YYYY-MM-DD"
+  eventDates?: string[];
+  selectedDate?: string | null;
   onDayPress?: (iso: string | null) => void;
 };
 
@@ -31,9 +31,7 @@ export default function MiniCalendar({ eventDates = [], selectedDate, onDayPress
 
   const cells = buildGrid(year, month);
   const weeks: (number | null)[][] = [];
-  for (let i = 0; i < cells.length; i += 7) {
-    weeks.push(cells.slice(i, i + 7));
-  }
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
 
   const eventDaySet = new Set(
     eventDates
@@ -50,14 +48,12 @@ export default function MiniCalendar({ eventDates = [], selectedDate, onDayPress
     month === today.getMonth() &&
     day === today.getDate();
 
-  const hasEvent = (day: number | null) =>
-    day !== null && eventDaySet.has(day);
+  const hasEvent = (day: number | null) => day !== null && eventDaySet.has(day);
 
   const toISO = (day: number) =>
     `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
-  const isSelected = (day: number | null) =>
-    day !== null && selectedDate === toISO(day);
+  const isSelected = (day: number | null) => day !== null && selectedDate === toISO(day);
 
   const handleDayPress = (day: number) => {
     if (!onDayPress) return;
@@ -81,16 +77,18 @@ export default function MiniCalendar({ eventDates = [], selectedDate, onDayPress
         <Text style={styles.headerTitle}>Event Calendar</Text>
         <View style={styles.monthNav}>
           <Pressable onPress={prevMonth} hitSlop={8}>
-            <Ionicons name="chevron-back-outline" size={14} color="#000" />
+            <Ionicons name="chevron-back-outline" size={14} color="#787985" />
           </Pressable>
           <View style={styles.monthPill}>
             <Text style={styles.monthText}>{MONTH_NAMES[month]}</Text>
           </View>
           <Pressable onPress={nextMonth} hitSlop={8}>
-            <Ionicons name="chevron-forward-outline" size={14} color="#000" />
+            <Ionicons name="chevron-forward-outline" size={14} color="#787985" />
           </Pressable>
         </View>
       </View>
+
+      <View style={styles.headerDivider} />
 
       <View style={styles.labelsRow}>
         {DAY_LABELS.map(label => (
@@ -100,7 +98,7 @@ export default function MiniCalendar({ eventDates = [], selectedDate, onDayPress
         ))}
       </View>
 
-      <View style={styles.grid}>
+      <View>
         {weeks.map((week, wi) => (
           <View key={wi} style={styles.weekRow}>
             {week.map((day, di) => {
@@ -146,21 +144,26 @@ export default function MiniCalendar({ eventDates = [], selectedDate, onDayPress
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#e5e4e4',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: '#f3f4f8',
+    borderRadius: 16,
+    padding: 20,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    paddingBottom: 12,
   },
   headerTitle: {
     fontSize: 16,
     fontWeight: '500',
     letterSpacing: 1.6,
     color: '#000',
+  },
+  headerDivider: {
+    height: 1,
+    backgroundColor: '#d3d4db',
+    marginBottom: 4,
   },
   monthNav: {
     flexDirection: 'row',
@@ -169,7 +172,7 @@ const styles = StyleSheet.create({
   },
   monthPill: {
     borderWidth: 1,
-    borderColor: '#000',
+    borderColor: '#787985',
     borderRadius: 30,
     paddingHorizontal: 10,
     paddingVertical: 3,
@@ -192,9 +195,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#616161',
   },
-  grid: {
-    gap: 0,
-  },
   weekRow: {
     flexDirection: 'row',
   },
@@ -212,22 +212,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   todayCircle: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#40c9c4',
   },
   selectedCircle: {
-    backgroundColor: '#2D6A4F',
+    backgroundColor: '#1d1933',
   },
   dayText: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#303030',
+    color: '#787985',
     textAlign: 'center',
   },
   todayText: {
-    color: '#e3e3e3',
+    color: '#fff',
+    fontWeight: '700',
   },
   selectedText: {
     color: '#fff',
+    fontWeight: '700',
   },
   eventDot: {
     position: 'absolute',
@@ -235,6 +237,6 @@ const styles = StyleSheet.create({
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#2D6A4F',
+    backgroundColor: '#40c9c4',
   },
 });

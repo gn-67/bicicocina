@@ -32,8 +32,10 @@ export default function SubtabNav({ value, onChange }: Props) {
 const styles = StyleSheet.create({
   bar: {
     flexDirection: 'row',
-    backgroundColor: '#ececef',
+    backgroundColor: '#f3f4f8',
     borderRadius: 100,
+    borderWidth: 0.5,
+    borderColor: '#eee',
     padding: 4,
     alignSelf: 'stretch',
   },
@@ -45,17 +47,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   pillActive: {
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 1,
+    backgroundColor: '#40c9c4',
+    borderWidth: 0.5,
+    borderColor: '#d3d4db',
   },
   text: {
-    fontSize: 13,
-    color: '#000',
-    letterSpacing: 1,
+    fontSize: 12,
+    color: '#787985',
+    letterSpacing: 1.2,
   },
-  textActive: { fontWeight: '700' },
+  textActive: {
+    color: '#fff',
+    fontWeight: '700',
+  },
 });

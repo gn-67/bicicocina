@@ -41,6 +41,7 @@ export default function EventDetailScreen() {
           title: 'Event',
           headerBackTitle: 'Back',
           headerTintColor: '#000',
+          headerTitleStyle: { fontWeight: '700' },
           headerStyle: { backgroundColor: '#fff' },
           headerShadowVisible: true,
         }}
@@ -50,20 +51,37 @@ export default function EventDetailScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.heroBox} />
-
-        <Text style={styles.eventName}>{event.name}</Text>
-
-        <View style={styles.metaRow}>
-          <Ionicons name="time-outline" size={13} color="#555" />
-          <Text style={styles.metaText}>{event.time}</Text>
+        {/* Hero image */}
+        <View style={styles.heroBox}>
+          <Ionicons
+            name="image-outline"
+            size={48}
+            color="#bbb"
+            style={styles.heroPlaceholderIcon}
+          />
         </View>
 
-        <View style={styles.metaRow}>
-          <Ionicons name="location-outline" size={13} color="#555" />
-          <Text style={styles.metaText}>{event.location}</Text>
+        {/* Title + bookmark row */}
+        <View style={styles.titleRow}>
+          <Text style={styles.eventName}>{event.name}</Text>
+          <View style={styles.bookmarkBtn}>
+            <Ionicons name="bookmark-outline" size={18} color="#787985" />
+          </View>
         </View>
 
+        {/* Time + location */}
+        <View style={styles.metaBlock}>
+          <View style={styles.metaRow}>
+            <Ionicons name="time-outline" size={13} color="#787985" />
+            <Text style={styles.metaText}>{event.time}</Text>
+          </View>
+          <View style={styles.metaRow}>
+            <Ionicons name="location-outline" size={13} color="#787985" />
+            <Text style={styles.metaText}>{event.location}</Text>
+          </View>
+        </View>
+
+        {/* Reserve button */}
         <Pressable
           style={styles.reserveBtn}
           onPress={() =>
@@ -76,17 +94,10 @@ export default function EventDetailScreen() {
           <Text style={styles.reserveBtnText}>Reserve</Text>
         </Pressable>
 
+        {/* Description */}
         <View style={styles.descSection}>
           <Text style={styles.descLabel}>Event Description</Text>
           <Text style={styles.descText}>{event.description}</Text>
-        </View>
-
-        <View style={styles.tagsSection}>
-          {event.tags.map(tag => (
-            <View key={tag} style={styles.tag}>
-              <Text style={styles.tagText}>{tag}</Text>
-            </View>
-          ))}
         </View>
       </ScrollView>
     </>
@@ -95,85 +106,89 @@ export default function EventDetailScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  content: { padding: 28, paddingBottom: 48 },
+  content: { padding: 25, paddingBottom: 48 },
   notFound: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#fff',
   },
-  notFoundText: { fontSize: 16, color: '#888' },
+  notFoundText: { fontSize: 16, color: '#787985' },
 
   heroBox: {
     width: '100%',
     height: 316,
-    backgroundColor: '#d9d9d9',
-    borderRadius: 20,
+    backgroundColor: '#f3f4f8',
+    borderRadius: 24,
+    marginBottom: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroPlaceholderIcon: {
+    opacity: 0.4,
+  },
+
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  eventName: {
+    fontSize: 25,
+    fontWeight: '700',
+    color: '#000',
+    flex: 1,
+    marginRight: 12,
+  },
+  bookmarkBtn: {
+    width: 35,
+    height: 35,
+    borderRadius: 17.5,
+    borderWidth: 1,
+    borderColor: '#e1e1e1',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  metaBlock: {
+    gap: 8,
     marginBottom: 24,
   },
-
-  eventName: {
-    fontSize: 30,
-    fontWeight: '400',
-    color: '#000',
-    marginBottom: 10,
-  },
-
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 6,
   },
   metaText: {
     fontSize: 12,
-    color: '#000',
+    color: '#787985',
   },
 
   reserveBtn: {
-    backgroundColor: '#d9d9d9',
-    borderRadius: 54,
-    paddingVertical: 18,
+    backgroundColor: '#f85057',
+    borderRadius: 20,
+    height: 53,
     alignItems: 'center',
-    marginTop: 18,
-    marginBottom: 28,
+    justifyContent: 'center',
+    marginBottom: 40,
   },
   reserveBtnText: {
-    fontSize: 14,
-    letterSpacing: 1.2,
-    color: '#000',
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#fff',
+    letterSpacing: 1.6,
   },
 
-  descSection: { gap: 12, marginBottom: 20 },
+  descSection: { gap: 15 },
   descLabel: {
-    fontSize: 12,
-    letterSpacing: 1.2,
+    fontSize: 20,
+    fontWeight: '700',
     color: '#000',
-    fontWeight: '500',
   },
   descText: {
     fontSize: 12,
-    letterSpacing: 1.2,
-    color: '#000',
+    color: '#787985',
     lineHeight: 20,
-  },
-
-  tagsSection: {
-    flexDirection: 'row',
-    gap: 8,
-    flexWrap: 'wrap',
-  },
-  tag: {
-    backgroundColor: '#e1e1e1',
-    borderWidth: 1,
-    borderColor: '#b3b3b3',
-    borderRadius: 100,
-    paddingHorizontal: 14,
-    paddingVertical: 5,
-  },
-  tagText: {
-    fontSize: 11,
-    color: '#777',
-    letterSpacing: 1,
   },
 });

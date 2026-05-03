@@ -2,13 +2,13 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 const DAYS: { key: number; label: string; hours: string }[] = [
+  { key: 6, label: 'Saturday', hours: '12:00 PM – 3:00 PM' },
+  { key: 0, label: 'Sunday', hours: 'Closed' },
   { key: 1, label: 'Monday', hours: '6:30 PM – 9:00 PM' },
   { key: 2, label: 'Tuesday', hours: '6:30 PM – 9:00 PM' },
   { key: 3, label: 'Wednesday', hours: '6:00 PM – 9:00 PM' },
   { key: 4, label: 'Thursday', hours: '6:00 PM – 9:00 PM' },
   { key: 5, label: 'Friday', hours: 'Closed' },
-  { key: 6, label: 'Saturday', hours: '12:00 PM – 3:00 PM' },
-  { key: 0, label: 'Sunday', hours: 'Closed' },
 ];
 
 export default function HoursTable() {
@@ -16,15 +16,28 @@ export default function HoursTable() {
 
   return (
     <View style={styles.card}>
-      {DAYS.map(d => {
+      {DAYS.map((d, i) => {
         const isToday = d.key === today;
+        const isFirst = i === 0;
         return (
           <React.Fragment key={d.key}>
             <View style={styles.row}>
-              <Text style={[styles.day, isToday && styles.todayText]}>
+              <Text
+                style={[
+                  styles.day,
+                  isFirst && styles.firstDay,
+                  isToday && styles.todayText,
+                ]}
+              >
                 {d.label}
               </Text>
-              <Text style={[styles.hours, isToday && styles.todayText]}>
+              <Text
+                style={[
+                  styles.hours,
+                  isFirst && styles.firstDay,
+                  isToday && styles.todayText,
+                ]}
+              >
                 {d.hours}
               </Text>
             </View>
@@ -42,9 +55,9 @@ export default function HoursTable() {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#ececef',
-    borderRadius: 20,
-    padding: 18,
+    backgroundColor: '#f3f4f8',
+    borderRadius: 15,
+    padding: 20,
     gap: 8,
   },
   row: {
@@ -53,20 +66,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   day: {
-    fontSize: 13,
-    color: '#000',
-    letterSpacing: 0.6,
+    fontSize: 12,
+    color: '#787985',
+    letterSpacing: 1.2,
   },
   hours: {
-    fontSize: 13,
-    color: '#000',
+    fontSize: 12,
+    color: '#787985',
     textAlign: 'right',
-    letterSpacing: 0.6,
+    letterSpacing: 1.2,
   },
-  todayText: { fontWeight: '700' },
+  firstDay: {
+    fontWeight: '700',
+    color: '#000',
+  },
+  todayText: {
+    fontWeight: '700',
+    color: '#2D6A4F',
+  },
   note: {
     fontSize: 10,
-    color: '#52525b',
+    color: '#787985',
     fontStyle: 'italic',
     marginTop: -2,
     lineHeight: 14,
