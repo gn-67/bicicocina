@@ -13,7 +13,14 @@ import { useRoutes } from '../../hooks/useRoutes';
 import { useRatings } from '../../hooks/useRatings';
 import { useAuth } from '../../hooks/useAuth';
 import routesGeoJSON from '../../data/routes.json';
+import curatedRoutesGeoJSON from '../../data/curated-routes.json';
 import bikelanes from '../../data/bikelanes-la.json';
+import { getRouteGallery } from '../../data/route-gallery';
+
+const allLocalFeatures = [
+  ...routesGeoJSON.features,
+  ...curatedRoutesGeoJSON.features,
+];
 
 const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
 if (MAPBOX_TOKEN) Mapbox.setAccessToken(MAPBOX_TOKEN);
@@ -51,9 +58,7 @@ export default function RouteDetailScreen() {
   const [submitting, setSubmitting] = useState(false);
 
   const routeFeature =
-    routesGeoJSON.features.find((f) => f.properties?.id === id) ??
-    routesGeoJSON.features[0] ??
-    null;
+    allLocalFeatures.find((f) => f.properties?.id === id) ?? null;
   const routeLineGeoJSON = routeFeature
     ? { type: 'FeatureCollection', features: [routeFeature] }
     : null;
@@ -280,18 +285,35 @@ export default function RouteDetailScreen() {
           )}
 
           {/* ── Photos Section ── */}
-          <View style={styles.photosSection}>
-            <View style={styles.photosGrid}>
-              <View style={styles.photoLarge}>
-                <View style={[styles.photoPlaceholder, { height: 160 }]} />
+          {(() => {
+            const gallery = getRouteGallery(id);
+            return (
+              <View style={styles.photosSection}>
+                <View style={styles.photosGrid}>
+                  <View style={styles.photoLarge}>
+                    <Image
+                      source={{ uri: gallery[0] }}
+                      style={[styles.photoPlaceholder, { height: 160 }]}
+                      resizeMode="cover"
+                    />
+                  </View>
+                  <View style={styles.photoSmallCol}>
+                    <Image
+                      source={{ uri: gallery[1] }}
+                      style={[styles.photoPlaceholder, { height: 78 }]}
+                      resizeMode="cover"
+                    />
+                    <Image
+                      source={{ uri: gallery[2] }}
+                      style={[styles.photoPlaceholder, { height: 78 }]}
+                      resizeMode="cover"
+                    />
+                  </View>
+                </View>
+                <Text style={styles.photosLabel}>See all Photos</Text>
               </View>
-              <View style={styles.photoSmallCol}>
-                <View style={[styles.photoPlaceholder, { height: 78 }]} />
-                <View style={[styles.photoPlaceholder, { height: 78 }]} />
-              </View>
-            </View>
-            <Text style={styles.photosLabel}>See all Photos</Text>
-          </View>
+            );
+          })()}
         </View>
 
         <View style={{ height: insets.bottom + 100 }} />

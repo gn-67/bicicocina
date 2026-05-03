@@ -11,7 +11,7 @@
         "length_mi": 1.4,
         "rating": 4.6,
         "beginner_friendly": true,
-        "tags": ["Scenic", "Day"],
+        "tags": ["Scenic", "Day", "Beginner Friendly", "Short"],
         "active_riders": 12,
         "image": "https://images.unsplash.com/photo-1517649763962-0c623066013b?w=600&q=70",
         "start_label": "Today | 1:00 PM",
@@ -183,7 +183,7 @@
         "id": "rt-ucla-sm-pier",
         "name": "UCLA to Santa Monica Pier",
         "created_by": "Demo",
-        "length_mi": 5.0,
+        "length_mi": 9.2,
         "rating": 4.7,
         "beginner_friendly": false,
         "tags": ["Scenic", "Day"],
@@ -204,58 +204,24 @@
       "geometry": {
         "type": "LineString",
         "coordinates": [
-          [-118.4441, 34.0705], 
-          [-118.4445, 34.0635], 
-          [-118.4435, 34.0585], 
-          [-118.4435, 34.0515], 
-          [-118.4485, 34.0495], 
-          [-118.4535, 34.0475], 
-          [-118.4635, 34.0435], 
-          [-118.4735, 34.0395], 
-          [-118.4785, 34.0365], 
-          [-118.4845, 34.0305], 
-          [-118.4905, 34.0245], 
-          [-118.4965, 34.0185], 
-          [-118.4955, 34.0125], 
-          [-118.4945, 34.0115], 
-          [-118.4986, 34.0086]  
+          [-118.4444, 34.0700],
+          [-118.4438, 34.0650],
+          [-118.4428, 34.0580],
+          [-118.4422, 34.0510],
+          [-118.4418, 34.0450],
+          [-118.4415, 34.0390],
+          [-118.4412, 34.0352],
+          [-118.4500, 34.0348],
+          [-118.4620, 34.0338],
+          [-118.4680, 34.0320],
+          [-118.4748, 34.0295],
+          [-118.4820, 34.0210],
+          [-118.4870, 34.0170],
+          [-118.4940, 34.0160],
+          [-118.4960, 34.0120],
+          [-118.4983, 34.0087]
         ]
       }
-    },
-    {
-    "type": "Feature",                                                                                                                                                  
-    "id": "rt-echo-park",                                                                                                                                             
-    "properties": {                                                                                                                                                     
-      "id": "rt-echo-park",
-      "name": "Kitchen → Echo Park Lake",                                                                                                                               
-      "created_by": "BiciCocina",                                                                                                                                       
-      "length_mi": 2.4,
-      "rating": 4.3,                                                                                                                                                    
-      "beginner_friendly": true,                                                                                                                                        
-      "tags": ["Scenic", "Safest"],
-      "active_riders": 0,                                                                                                                                               
-      "image": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=70",
-      "start_label": "",                                                                                                                                                
-      "start_location": "Bicycle Kitchen",
-      "end_location": "Echo Park Lake",                                                                                                                                 
-      "distance_label": "2.4 mi",                                                                                                                                       
-      "attendee_count": 0,
-      "attendee_avatars": [],                                                                                                                                           
-      "is_active": false
-    },                                                                                                                                                                  
-    "geometry": {
-      "type": "LineString",                                                                                                                                             
-      "coordinates": [
-        [-118.2871, 34.0928],
-        [-118.2820, 34.0928],
-        [-118.2770, 34.0928],                                                                                                                                           
-        [-118.2770, 34.0870],
-        [-118.2710, 34.0867],                                                                                                                                           
-        [-118.2650, 34.0820],                                                                                                                                           
-        [-118.2621, 34.0800],
-        [-118.2608, 34.0788]                                                                                                                                            
-      ]                                                                                                                                                                 
     }
-  }
   ]
 }

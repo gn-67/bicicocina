@@ -34,7 +34,7 @@ function DifficultySlider({ difficulty = 0.3 }: { difficulty?: number }) {
 export default function RecommendedRouteCard({ route, onPress }: Props) {
   // Use a heuristic for difficulty based on rating/length since it's not in the type yet
   // Lower rating or longer route -> higher difficulty for the visual mock
-  const difficulty = route.rating > 4.5 ? 0.3 : 0.7;
+  const difficulty = 0.1 + (0.05 * Math.min(route.length_mi, 15) * (5.5 - route.rating));
 
   return (
     <Pressable style={styles.card} onPress={() => onPress?.(route)}>
