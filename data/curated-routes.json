@@ -1,0 +1,87 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "rt-jefferson-hollywood",
+      "properties": {
+        "id": "rt-jefferson-hollywood",
+        "name": "Jefferson Park to Hollywood",
+        "created_by": "BiciCocina",
+        "length_mi": 8.2,
+        "rating": 4.5,
+        "beginner_friendly": true,
+        "tags": ["Beginner Friendly", "Scenic", "Bike Paths"],
+        "active_riders": 0,
+        "image": "https://images.unsplash.com/photo-1517649763962-0c623066013b?w=600&q=70",
+        "start_label": "Anytime",
+        "start_location": "Jefferson Park",
+        "end_location": "Hollywood",
+        "distance_label": "13k",
+        "attendee_count": 0,
+        "attendee_avatars": [],
+        "is_active": true,
+        "curated": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-118.3175, 34.0255],
+          [-118.3150, 34.0255],
+          [-118.3050, 34.0255],
+          [-118.3000, 34.0300],
+          [-118.3000, 34.0400],
+          [-118.2950, 34.0500],
+          [-118.2900, 34.0600],
+          [-118.2850, 34.0700],
+          [-118.2800, 34.0800],
+          [-118.2800, 34.0900],
+          [-118.2850, 34.0950],
+          [-118.2900, 34.1000],
+          [-118.2950, 34.1015]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "rt-easthollywood-nohollywood",
+      "properties": {
+        "id": "rt-easthollywood-nohollywood",
+        "name": "East Hollywood to North Hollywood",
+        "created_by": "BiciCocina",
+        "length_mi": 7.1,
+        "rating": 4.6,
+        "beginner_friendly": true,
+        "tags": ["Beginner Friendly", "LA River", "Bike Paths"],
+        "active_riders": 0,
+        "image": "https://images.unsplash.com/photo-1502744688674-c619d1586c9e?w=600&q=70",
+        "start_label": "Anytime",
+        "start_location": "East Hollywood",
+        "end_location": "North Hollywood",
+        "distance_label": "11k",
+        "attendee_count": 0,
+        "attendee_avatars": [],
+        "is_active": true,
+        "curated": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-118.3000, 34.0900],
+          [-118.2900, 34.0950],
+          [-118.2800, 34.1000],
+          [-118.2700, 34.1100],
+          [-118.2600, 34.1200],
+          [-118.2500, 34.1250],
+          [-118.2450, 34.1300],
+          [-118.2400, 34.1350],
+          [-118.2400, 34.1450],
+          [-118.2400, 34.1550],
+          [-118.2400, 34.1650],
+          [-118.2450, 34.1700],
+          [-118.2500, 34.1750]
+        ]
+      }
+    }
+  ]
+}
