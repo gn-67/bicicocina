@@ -175,6 +175,53 @@
           [-118.2945, 34.0960]
         ]
       }
+    },
+    {
+      "type": "Feature",
+      "id": "rt-ucla-sm-pier",
+      "properties": {
+        "id": "rt-ucla-sm-pier",
+        "name": "UCLA to Santa Monica Pier",
+        "created_by": "Demo",
+        "length_mi": 9.2,
+        "rating": 4.7,
+        "beginner_friendly": false,
+        "tags": ["Scenic", "Day"],
+        "active_riders": 3,
+        "image": "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=600&q=70",
+        "start_label": "Today | 10:00 AM",
+        "start_location": "Tom Bradley Center, UCLA",
+        "end_location": "Santa Monica Pier",
+        "distance_label": "15k",
+        "attendee_count": 3,
+        "attendee_avatars": [
+          "https://i.pravatar.cc/80?img=30",
+          "https://i.pravatar.cc/80?img=31",
+          "https://i.pravatar.cc/80?img=32"
+        ],
+        "is_active": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-118.4444, 34.0700],
+          [-118.4438, 34.0650],
+          [-118.4428, 34.0580],
+          [-118.4422, 34.0510],
+          [-118.4418, 34.0450],
+          [-118.4415, 34.0390],
+          [-118.4412, 34.0352],
+          [-118.4500, 34.0348],
+          [-118.4620, 34.0338],
+          [-118.4680, 34.0320],
+          [-118.4748, 34.0295],
+          [-118.4820, 34.0210],
+          [-118.4870, 34.0170],
+          [-118.4940, 34.0160],
+          [-118.4960, 34.0120],
+          [-118.4983, 34.0087]
+        ]
+      }
     }
   ]
 }

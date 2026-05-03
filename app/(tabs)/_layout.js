@@ -1,30 +1,34 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { StyleSheet, Platform } from 'react-native';
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#2D6A4F',
-        tabBarInactiveTintColor: '#888',
+        tabBarActiveTintColor: '#43CAC6',
+        tabBarInactiveTintColor: '#787985',
+        tabBarStyle: styles.tabBar,
+        tabBarLabelStyle: styles.tabBarLabel,
+        tabBarItemStyle: styles.tabBarItem,
+        headerShown: false,
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Explore',
-          headerShown: false,
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="compass-outline" size={size} color={color} />
+          title: 'EXPLORE',
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="compass" size={24} color={color} />
           ),
         }}
       />
       <Tabs.Screen
         name="map"
         options={{
-          title: 'Map',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="map-outline" size={size} color={color} />
+          title: 'MAP',
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="map" size={24} color={color} />
           ),
         }}
       />
@@ -41,12 +45,41 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
+          title: 'ME',
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="person" size={24} color={color} />
           ),
         }}
       />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  tabBar: {
+    position: 'absolute',
+    bottom: 25,
+    left: 40,
+    right: 40,
+    backgroundColor: '#1E1A33',
+    borderRadius: 54,
+    height: 84,
+    paddingBottom: Platform.OS === 'ios' ? 25 : 12,
+    paddingTop: 12,
+    borderTopWidth: 0,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+  },
+  tabBarLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1,
+    marginTop: 4,
+  },
+  tabBarItem: {
+    height: 50,
+  },
+});

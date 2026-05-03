@@ -8,7 +8,7 @@ import Mapbox, {
 } from '@rnmapbox/maps';
 import { useFocusEffect } from 'expo-router';
 
-import bikeways from '../data/bikeways.json';
+import bikelanes from '../data/bikelanes-la.json';
 import seedRoutes from '../data/routes.json';
 import type { Route } from '../lib/types';
 
@@ -109,7 +109,7 @@ export default function MapView({ onRouteTap }: Props) {
   };
 
   return (
-    <MapboxMap style={styles.map} styleURL={Mapbox.StyleURL.Street}>
+    <MapboxMap style={styles.map} styleURL={Mapbox.StyleURL.Light} minZoomLevel={9}>
       <Camera
         centerCoordinate={KITCHEN_CENTER}
         zoomLevel={KITCHEN_ZOOM}
@@ -117,27 +117,36 @@ export default function MapView({ onRouteTap }: Props) {
         animationDuration={0}
       />
 
-      <ShapeSource id="bikeways-src" shape={bikeways as GeoJSON.FeatureCollection}>
+      {/* Bike lane network — orange, width + shade by class */}
+      <ShapeSource id="bikelanes-src" shape={bikelanes as GeoJSON.FeatureCollection}>
         <LineLayer
-          id="bikeways-line"
+          id="bikelanes-line"
           slot="middle"
           style={{
             lineColor: [
-              'match',
-              ['get', 'BIKEWAY_TYPE'],
-              'Class 1', '#16a34a',
-              'Class 2', '#3b82f6',
-              'Class 3', '#f59e0b',
-              'Class 4', '#22c55e',
-              '#9ca3af',
+              'match', ['get', 'class'],
+              1, '#f97316',
+              2, '#f97316',
+              3, '#fb923c',
+              4, '#ea580c',
+              '#f97316',
             ],
-            lineWidth: 3,
+            lineWidth: [
+              'match', ['get', 'class'],
+              1, 2.5,
+              2, 2,
+              3, 1.5,
+              4, 3,
+              2,
+            ],
             lineCap: 'round',
             lineJoin: 'round',
+            lineOpacity: 0.85,
           }}
         />
       </ShapeSource>
 
+      {/* Routes — light blue with glow, tappable */}
       <ShapeSource
         id="routes-src"
         shape={routes}
@@ -148,10 +157,10 @@ export default function MapView({ onRouteTap }: Props) {
           id="routes-glow"
           slot="top"
           style={{
-            lineColor: colorExpr,
+            lineColor: '#60a5fa',
             lineWidth: glowWidthExpr,
             lineBlur: 6,
-            lineOpacity: 0.55,
+            lineOpacity: 0.45,
             lineCap: 'round',
             lineJoin: 'round',
           }}
@@ -160,7 +169,7 @@ export default function MapView({ onRouteTap }: Props) {
           id="routes-sharp"
           slot="top"
           style={{
-            lineColor: colorExpr,
+            lineColor: '#60a5fa',
             lineWidth: sharpWidthExpr,
             lineCap: 'round',
             lineJoin: 'round',

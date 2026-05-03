@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 
 import ActiveRouteCard from '../../components/explore/ActiveRouteCard';
 import ExploreHeader from '../../components/explore/ExploreHeader';
@@ -31,7 +32,7 @@ export default function ExploreScreen() {
   const recommended = useMemo(() => getRecommendedRoutes(filter), [filter]);
 
   const handleViewRoute = (route: Route) => {
-    console.log('[Explore] view route', route.id);
+    router.push(`/route/${route.id}`);
   };
 
   return (

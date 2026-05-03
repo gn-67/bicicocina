@@ -1,97 +1,101 @@
 import { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable, TextInput, ActivityIndicator, Alert } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import {
+  View, Text, ScrollView, StyleSheet, Pressable,
+  ActivityIndicator, Dimensions, TextInput, Alert, Image,
+} from 'react-native';
+import { useLocalSearchParams, router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import Mapbox, { Camera, LineLayer, MapView as MapboxMap, ShapeSource } from '@rnmapbox/maps';
+
 import RatingStars from '../../components/RatingStars';
 import { useRoutes } from '../../hooks/useRoutes';
 import { useRatings } from '../../hooks/useRatings';
-import { useRideTracking } from '../../hooks/useRideTracking';
 import { useAuth } from '../../hooks/useAuth';
+import routesGeoJSON from '../../data/routes.json';
+import bikelanes from '../../data/bikelanes-la.json';
+
+const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
+if (MAPBOX_TOKEN) Mapbox.setAccessToken(MAPBOX_TOKEN);
+
+const { width: SCREEN_W } = Dimensions.get('window');
+const CARD_W = SCREEN_W - 32;
+const MAP_H = 260;
 
 const RATING_CATEGORIES = ['safety', 'lighting', 'beginner', 'scenic', 'surface'];
 
-function CategoryRatingInput({ label, value, onChange }) {
-  return (
-    <View style={styles.categoryRow}>
-      <Text style={styles.categoryLabel}>{label}</Text>
-      <View style={styles.categoryStars}>
-        {[1, 2, 3, 4, 5].map((n) => (
-          <Pressable key={n} onPress={() => onChange(n)}>
-            <Text style={[styles.starButton, n <= value && styles.starButtonActive]}>
-              {n <= value ? '\u2605' : '\u2606'}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-    </View>
-  );
+function getRouteBounds(coordinates) {
+  let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
+  for (const [lng, lat] of coordinates) {
+    if (lng < minLng) minLng = lng;
+    if (lng > maxLng) maxLng = lng;
+    if (lat < minLat) minLat = lat;
+    if (lat > maxLat) maxLat = lat;
+  }
+  return { ne: [maxLng, maxLat], sw: [minLng, minLat] };
 }
 
 export default function RouteDetailScreen() {
   const { id } = useLocalSearchParams();
-  const { user } = useAuth();
+  const insets = useSafeAreaInsets();
   const { fetchRouteById } = useRoutes();
-  const { ratings, fetchRatings, fetchUserRating, userRating, submitRating } = useRatings(id);
-  const { isRiding, startRide, endRide, stats } = useRideTracking();
+  const { userRating, fetchUserRating, submitRating } = useRatings(id);
+  const { user } = useAuth();
 
   const [route, setRoute] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showRatingForm, setShowRatingForm] = useState(false);
+  const [showReviewForm, setShowReviewForm] = useState(false);
   const [ratingForm, setRatingForm] = useState({
     safety: 0, lighting: 0, beginner: 0, scenic: 0, surface: 0, reviewText: '',
   });
   const [submitting, setSubmitting] = useState(false);
 
+  const routeFeature =
+    routesGeoJSON.features.find((f) => f.properties?.id === id) ??
+    routesGeoJSON.features[0] ??
+    null;
+  const routeLineGeoJSON = routeFeature
+    ? { type: 'FeatureCollection', features: [routeFeature] }
+    : null;
+  const bounds = routeFeature?.geometry?.coordinates?.length
+    ? getRouteBounds(routeFeature.geometry.coordinates)
+    : null;
+
   useEffect(() => {
-    loadData();
+    if (routeFeature?.properties) {
+      const p = routeFeature.properties;
+      setRoute({
+        name: p.name,
+        distance: p.length_mi != null ? `${p.length_mi} mi` : null,
+        elevation: p.elevation ?? null,
+        rating: p.rating ?? 0,
+        reviewCount: 0,
+        tags: p.tags ?? [],
+      });
+    }
+    setLoading(false);
+    fetchRouteById(id)
+      .then((data) => {
+        if (data) setRoute(data);
+      })
+      .catch(() => {});
+    fetchUserRating();
   }, [id]);
 
-  async function loadData() {
-    setLoading(true);
-    try {
-      const [routeData] = await Promise.all([
-        fetchRouteById(id),
-        fetchRatings(),
-        fetchUserRating(),
-      ]);
-      setRoute(routeData);
-    } catch (e) {
-      // route not found — keep null
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleStartRide() {
-    try {
-      await startRide(id);
-    } catch (e) {
-      Alert.alert('Error', e.message);
-    }
-  }
-
-  async function handleEndRide() {
-    const summary = await endRide();
-    if (summary) {
-      Alert.alert(
-        'Ride Complete',
-        `Distance: ${summary.distance} mi\nDuration: ${summary.durationMin} min\nCalories: ${summary.calories}\nElevation: ${summary.elevation} ft`
-      );
-    }
+  function handleStartRide() {
+    router.push('/ride/' + id);
   }
 
   async function handleSubmitRating() {
-    const incomplete = RATING_CATEGORIES.some((c) => ratingForm[c] === 0);
-    if (incomplete) {
+    if (RATING_CATEGORIES.some((c) => ratingForm[c] === 0)) {
       Alert.alert('Rate all categories', 'Please rate each category before submitting.');
       return;
     }
-
     setSubmitting(true);
     try {
       await submitRating(ratingForm);
-      setShowRatingForm(false);
+      setShowReviewForm(false);
       setRatingForm({ safety: 0, lighting: 0, beginner: 0, scenic: 0, surface: 0, reviewText: '' });
-      loadData();
     } catch (e) {
       Alert.alert('Error', e.message);
     } finally {
@@ -101,162 +105,394 @@ export default function RouteDetailScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color="#2D6A4F" />
+      <View style={[styles.root, { paddingTop: insets.top }]}>
+        <ActivityIndicator size="large" color="#2D6A4F" style={styles.loader} />
       </View>
     );
   }
 
-  if (!route) {
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <Text style={styles.text}>Route not found</Text>
-      </View>
-    );
-  }
+  const tags = (route?.tags ?? []).map(
+    (t) => t.charAt(0).toUpperCase() + t.slice(1).replace(/-/g, ' ')
+  );
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>{route.name}</Text>
-      {route.description && <Text style={styles.description}>{route.description}</Text>}
-
-      <View style={styles.metaRow}>
-        {route.distance != null && <Text style={styles.metaText}>{route.distance} mi</Text>}
-        {route.elevation != null && <Text style={styles.metaText}>{route.elevation} ft gain</Text>}
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Overall Rating</Text>
-        <RatingStars rating={route.rating} />
-        <Text style={styles.reviewCount}>{route.reviewCount} review{route.reviewCount !== 1 ? 's' : ''}</Text>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Reviews</Text>
-        {ratings.length === 0 ? (
-          <Text style={styles.text}>No reviews yet — be the first!</Text>
-        ) : (
-          ratings.map((r) => (
-            <View key={r.id} style={styles.reviewItem}>
-              <Text style={styles.reviewAuthor}>{r.profiles?.display_name || 'Anonymous'}</Text>
-              <View style={styles.reviewScores}>
-                {RATING_CATEGORIES.map((c) => (
-                  <Text key={c} style={styles.reviewScore}>{c}: {r[c]}/5</Text>
-                ))}
-              </View>
-              {r.review_text ? <Text style={styles.reviewText}>{r.review_text}</Text> : null}
-            </View>
-          ))
-        )}
-      </View>
-
-      {user && !userRating && !showRatingForm && (
-        <Pressable style={styles.secondaryButton} onPress={() => setShowRatingForm(true)}>
-          <Text style={styles.secondaryButtonText}>Rate This Route</Text>
+    <View style={[styles.root, { paddingTop: insets.top }]}>
+      {/* ── Header ── */}
+      <View style={styles.header}>
+        <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={24} color="#111" />
         </Pressable>
-      )}
+        <Text style={styles.headerTitle}>Bike Routes</Text>
+      </View>
 
-      {showRatingForm && (
-        <View style={styles.ratingForm}>
-          <Text style={styles.sectionTitle}>Your Rating</Text>
-          {RATING_CATEGORIES.map((cat) => (
-            <CategoryRatingInput
-              key={cat}
-              label={cat.charAt(0).toUpperCase() + cat.slice(1)}
-              value={ratingForm[cat]}
-              onChange={(v) => setRatingForm((prev) => ({ ...prev, [cat]: v }))}
-            />
-          ))}
-          <TextInput
-            style={styles.textInput}
-            placeholder="Write a review (optional)"
-            multiline
-            value={ratingForm.reviewText}
-            onChangeText={(t) => setRatingForm((prev) => ({ ...prev, reviewText: t }))}
-          />
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+
+        {/* ── Map Preview ── */}
+        <View style={styles.mapCard}>
+          {MAPBOX_TOKEN ? (
+            <MapboxMap
+              style={{ width: SCREEN_W, height: 320 }}
+              styleURL={Mapbox.StyleURL.Light}
+              minZoomLevel={9}
+              scrollEnabled={false}
+              zoomEnabled={false}
+              rotateEnabled={false}
+              pitchEnabled={false}
+              logoEnabled={false}
+              attributionEnabled={false}
+            >
+              {bounds ? (
+                <Camera
+                  bounds={{ ne: bounds.ne, sw: bounds.sw, paddingTop: 40, paddingBottom: 100, paddingLeft: 40, paddingRight: 40 }}
+                  animationMode="none"
+                  animationDuration={0}
+                />
+              ) : (
+                <Camera centerCoordinate={[-118.2871, 34.0928]} zoomLevel={13} animationMode="none" animationDuration={0} />
+              )}
+              <ShapeSource id="detail-bikelanes-src" shape={bikelanes}>
+                <LineLayer
+                  id="detail-bikelanes-line"
+                  style={{
+                    lineColor: ['match', ['get', 'class'], 1, '#40c9c4', 2, '#40c9c4', 3, '#40c9c4', 4, '#40c9c4', '#40c9c4'],
+                    lineWidth: 2,
+                    lineCap: 'round',
+                    lineJoin: 'round',
+                    lineOpacity: 0.5,
+                  }}
+                />
+              </ShapeSource>
+
+              {routeLineGeoJSON && (
+                <ShapeSource id="detail-route-src" shape={routeLineGeoJSON}>
+                  <LineLayer
+                    id="detail-route-line"
+                    style={{ lineColor: '#43CAC6', lineWidth: 5, lineCap: 'round', lineJoin: 'round' }}
+                  />
+                </ShapeSource>
+              )}
+            </MapboxMap>
+          ) : (
+            <View style={styles.mapFallback}>
+              <Text style={styles.mapFallbackText}>Map unavailable</Text>
+            </View>
+          )}
+
+          <View style={styles.expandBadge}>
+            <Ionicons name="scan-outline" size={20} color="#333" />
+          </View>
+
           <Pressable
-            style={[styles.button, submitting && styles.buttonDisabled]}
-            onPress={handleSubmitRating}
-            disabled={submitting}
+            style={({ pressed }) => [styles.startBtn, pressed && styles.startBtnActive]}
+            onPress={handleStartRide}
           >
-            <Text style={styles.buttonText}>{submitting ? 'Submitting...' : 'Submit Rating'}</Text>
+            <Text style={styles.startBtnText}>Start Route</Text>
           </Pressable>
         </View>
-      )}
 
-      {stats && (
-        <View style={styles.statsSummary}>
-          <Text style={styles.sectionTitle}>Last Ride Summary</Text>
-          <Text style={styles.statText}>Distance: {stats.distance} mi</Text>
-          <Text style={styles.statText}>Duration: {stats.durationMin} min</Text>
-          <Text style={styles.statText}>Calories: {stats.calories}</Text>
-          <Text style={styles.statText}>Elevation: {stats.elevation} ft</Text>
+        <View style={styles.contentPadding}>
+          {/* ── Route Name ── */}
+          <Text style={styles.routeName}>{route?.name ?? id}</Text>
+
+          {/* ── Tags ── */}
+          {tags.length > 0 && (
+            <View style={styles.tagsRow}>
+              {tags.slice(0, 3).map((t) => (
+                <View key={t} style={styles.tag}>
+                  <Text style={styles.tagText}>{t}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* ── Rating + Distance ── */}
+          <View style={styles.ratingRow}>
+            <RatingStars rating={route?.rating ?? 0} />
+            <Text style={styles.ratingMeta}>
+              {(route?.rating ?? 0).toFixed(0)} ({route?.reviewCount ?? 100}+ reviews)
+            </Text>
+            {route?.distance != null && (
+              <Text style={styles.distanceText}>{route.distance}</Text>
+            )}
+          </View>
+
+          {/* ── Action Buttons ── */}
+          <View style={styles.actionsRow}>
+            <Pressable
+              style={({ pressed }) => [styles.addReviewBtn, pressed && { opacity: 0.8 }]}
+              onPress={() => setShowReviewForm((v) => !v)}
+            >
+              <Ionicons name="star" size={16} color="#fff" style={{ marginRight: 6 }} />
+              <Text style={styles.addReviewText}>Add Review</Text>
+            </Pressable>
+            
+            <Pressable style={({ pressed }) => [styles.addPhotoBtn, pressed && { opacity: 0.8 }]}>
+              <Ionicons name="camera" size={18} color="#787985" style={{ marginRight: 6 }} />
+              <Text style={styles.addPhotoText}>Add Photo</Text>
+            </Pressable>
+
+            <Pressable style={styles.bookmarkBtn}>
+              <Ionicons name="bookmark-outline" size={20} color="#787985" />
+            </Pressable>
+          </View>
+
+          {/* ── Review Form ── */}
+          {showReviewForm && (
+            <View style={styles.reviewForm}>
+              <Text style={styles.reviewFormTitle}>Your Review</Text>
+              {RATING_CATEGORIES.map((cat) => (
+                <View key={cat} style={styles.catRow}>
+                  <Text style={styles.catLabel}>
+                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                  </Text>
+                  <View style={styles.catStars}>
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <Pressable
+                        key={n}
+                        onPress={() => setRatingForm((prev) => ({ ...prev, [cat]: n }))}
+                      >
+                        <Ionicons
+                          name={n <= ratingForm[cat] ? 'star' : 'star-outline'}
+                          size={22}
+                          color={n <= ratingForm[cat] ? '#43CAC6' : '#ccc'}
+                        />
+                      </Pressable>
+                    ))}
+                  </View>
+                </View>
+              ))}
+              <TextInput
+                style={styles.textInput}
+                placeholder="Write a review (optional)"
+                placeholderTextColor="#aaa"
+                multiline
+                value={ratingForm.reviewText}
+                onChangeText={(t) => setRatingForm((prev) => ({ ...prev, reviewText: t }))}
+              />
+              <Pressable
+                style={[styles.submitBtn, submitting && { opacity: 0.6 }]}
+                onPress={handleSubmitRating}
+                disabled={submitting}
+              >
+                <Text style={styles.submitBtnText}>{submitting ? 'Submitting…' : 'Submit Review'}</Text>
+              </Pressable>
+            </View>
+          )}
+
+          {/* ── Photos Section ── */}
+          <View style={styles.photosSection}>
+            <View style={styles.photosGrid}>
+              <View style={styles.photoLarge}>
+                <View style={[styles.photoPlaceholder, { height: 160 }]} />
+              </View>
+              <View style={styles.photoSmallCol}>
+                <View style={[styles.photoPlaceholder, { height: 78 }]} />
+                <View style={[styles.photoPlaceholder, { height: 78 }]} />
+              </View>
+            </View>
+            <Text style={styles.photosLabel}>See all Photos</Text>
+          </View>
         </View>
-      )}
 
-      <Pressable
-        style={[styles.button, isRiding && styles.buttonDanger]}
-        onPress={isRiding ? handleEndRide : handleStartRide}
-      >
-        <Text style={styles.buttonText}>{isRiding ? 'End Ride' : 'Start Ride'}</Text>
-      </Pressable>
-    </ScrollView>
+        <View style={{ height: insets.bottom + 100 }} />
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  centered: { justifyContent: 'center', alignItems: 'center' },
-  content: { padding: 16, paddingBottom: 40 },
-  title: { fontSize: 24, fontWeight: 'bold', color: '#1B4332', marginBottom: 4 },
-  description: { fontSize: 14, color: '#666', marginBottom: 12 },
-  metaRow: { flexDirection: 'row', gap: 16, marginBottom: 16 },
-  metaText: { fontSize: 14, color: '#52796F', fontWeight: '500' },
-  section: { marginBottom: 24 },
-  sectionTitle: { fontSize: 18, fontWeight: '600', color: '#2D6A4F', marginBottom: 8 },
-  text: { fontSize: 14, color: '#666' },
-  reviewCount: { fontSize: 12, color: '#888', marginTop: 4 },
-  reviewItem: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  reviewAuthor: { fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 4 },
-  reviewScores: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
-  reviewScore: { fontSize: 12, color: '#666', backgroundColor: '#F0F7F4', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
-  reviewText: { fontSize: 14, color: '#444', marginTop: 4 },
-  ratingForm: { marginBottom: 24, padding: 12, backgroundColor: '#F0F7F4', borderRadius: 12 },
-  categoryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  categoryLabel: { fontSize: 14, color: '#333', fontWeight: '500' },
-  categoryStars: { flexDirection: 'row', gap: 4 },
-  starButton: { fontSize: 24, color: '#ccc' },
-  starButtonActive: { color: '#F4A261' },
+  root: { flex: 1, backgroundColor: '#fff' },
+  loader: { marginTop: 80 },
+
+  header: {
+    height: 60,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    backgroundColor: '#fff',
+  },
+  backBtn: { marginRight: 15 },
+  headerTitle: { fontSize: 16, fontWeight: '400', color: '#000', letterSpacing: 1.6 },
+
+  scroll: { paddingBottom: 20 },
+  contentPadding: { paddingHorizontal: 25 },
+
+  // ── Map Preview ──
+  mapCard: {
+    width: SCREEN_W,
+    height: 320,
+    backgroundColor: '#f3f4f8',
+    marginBottom: 25,
+    position: 'relative',
+  },
+  mapFallback: {
+    width: SCREEN_W,
+    height: 320,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mapFallbackText: { color: '#9596a0', fontSize: 14 },
+
+  expandBadge: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  startBtn: {
+    position: 'absolute',
+    bottom: 25,
+    left: 40,
+    right: 40,
+    backgroundColor: '#f85057',
+    borderRadius: 20,
+    height: 54,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  startBtnActive: { opacity: 0.9 },
+  startBtnText: { color: '#fff', fontSize: 16, fontWeight: '700', letterSpacing: 1.6 },
+
+  // ── Route Info ──
+  routeName: {
+    fontSize: 25,
+    fontWeight: '700',
+    color: '#000',
+    letterSpacing: 1.25,
+    marginBottom: 10,
+  },
+
+  // ── Tags ──
+  tagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 15,
+    marginBottom: 10,
+  },
+  tag: {
+    backgroundColor: '#d9f4f3',
+    borderRadius: 100,
+    paddingHorizontal: 15,
+    paddingVertical: 5,
+    borderWidth: 1,
+    borderColor: '#40c9c4',
+  },
+  tagText: { fontSize: 10, color: '#777', letterSpacing: 1 },
+
+  // ── Rating row ──
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 25,
+  },
+  ratingMeta: { fontSize: 12, color: '#9596a0', marginLeft: 13, letterSpacing: 1.2, flex: 1 },
+  distanceText: { fontSize: 12, color: '#9596a0', letterSpacing: 1.2 },
+
+  // ── Actions ──
+  actionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 20,
+  },
+  addReviewBtn: {
+    backgroundColor: '#1d1933',
+    borderRadius: 20,
+    height: 34,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 15,
+  },
+  addReviewText: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  addPhotoBtn: {
+    backgroundColor: '#f3f4f8',
+    borderRadius: 20,
+    height: 34,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 15,
+  },
+  addPhotoText: { color: '#787985', fontSize: 12, fontWeight: '700' },
+  bookmarkBtn: {
+    width: 35,
+    height: 35,
+    borderRadius: 35,
+    borderWidth: 1,
+    borderColor: '#eee',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 'auto',
+  },
+
+  // ── Review form ──
+  reviewForm: {
+    backgroundColor: '#fafafa',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
+  reviewFormTitle: { fontSize: 16, fontWeight: '700', color: '#111', marginBottom: 14 },
+  catRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  catLabel: { fontSize: 14, color: '#333', fontWeight: '500' },
+  catStars: { flexDirection: 'row', gap: 4 },
   textInput: {
     borderWidth: 1,
     borderColor: '#ddd',
-    borderRadius: 8,
+    borderRadius: 10,
     padding: 12,
     fontSize: 14,
     minHeight: 80,
     textAlignVertical: 'top',
-    marginVertical: 8,
     backgroundColor: '#fff',
+    marginVertical: 10,
+    color: '#111',
   },
-  button: {
-    backgroundColor: '#2D6A4F',
-    padding: 16,
+  submitBtn: {
+    backgroundColor: '#43CAC6',
     borderRadius: 12,
+    paddingVertical: 14,
     alignItems: 'center',
-    marginTop: 16,
   },
-  buttonDanger: { backgroundColor: '#c0392b' },
-  buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: '#fff', fontSize: 18, fontWeight: '600' },
-  secondaryButton: {
-    borderWidth: 1,
-    borderColor: '#2D6A4F',
-    padding: 12,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 16,
+  submitBtnText: { color: '#fff', fontSize: 15, fontWeight: '600' },
+
+  // ── Photos ──
+  photosSection: { marginTop: 5 },
+  photosGrid: {
+    flexDirection: 'row',
+    gap: 5,
+    marginBottom: 5,
   },
-  secondaryButtonText: { color: '#2D6A4F', fontSize: 16, fontWeight: '500' },
-  statsSummary: { marginBottom: 16, padding: 12, backgroundColor: '#F0F7F4', borderRadius: 12 },
-  statText: { fontSize: 14, color: '#333', marginBottom: 4 },
+  photoLarge: { flex: 1.3 },
+  photoSmallCol: { flex: 1, gap: 5 },
+  photoPlaceholder: {
+    backgroundColor: '#f3f4f8',
+    borderRadius: 20,
+    width: '100%',
+  },
+  photosLabel: {
+    fontSize: 12,
+    color: '#9596a0',
+    textAlign: 'right',
+    letterSpacing: 1.2,
+    marginTop: 5,
+  },
 });
