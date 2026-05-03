@@ -6,8 +6,8 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="route/[id]" options={{ headerShown: false }} />
-        <Stack.Screen name="ride/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="route/[id]" options={{ title: 'Route Details' }} />
+        <Stack.Screen name="event/[id]" options={{ title: 'Event' }} />
       </Stack>
     </GestureHandlerRootView>
   );

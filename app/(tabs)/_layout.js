@@ -35,9 +35,10 @@ export default function TabLayout() {
       <Tabs.Screen
         name="kitchen"
         options={{
-          title: 'KITCHEN',
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="bicycle" size={24} color={color} />
+          title: 'Kitchen',
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="bicycle-outline" size={size} color={color} />
           ),
         }}
       />
