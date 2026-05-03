@@ -1,14 +1,43 @@
 import { useState, useEffect } from 'react';
-import { View, Text, FlatList, Pressable, ActivityIndicator, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  ActivityIndicator,
+  StyleSheet,
+  Image,
+  Dimensions,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
+
+const { width: SCREEN_W } = Dimensions.get('window');
+
+// Mock data based on Figma
+const MOCK_USER = {
+  name: 'Joe Bruin',
+  ridesCompleted: 2,
+  friends: 8,
+  rank: 'Beginner Biker',
+  avatar: 'https://www.figma.com/api/mcp/asset/f6563f2a-2712-4887-9b34-c6fd4dbdce91',
+};
+
+const PHOTO_GALLERY = [
+  'https://www.figma.com/api/mcp/asset/1dca8d8f-20c6-45a1-a80f-ec5a455553a7',
+  'https://www.figma.com/api/mcp/asset/082f0ec3-4985-4600-b5b3-e409251fce8b',
+  'https://www.figma.com/api/mcp/asset/7bde035a-fa08-4ea5-9c25-9159f7697699',
+  'https://www.figma.com/api/mcp/asset/9be353bf-0913-4381-ad36-c74295485aa5',
+  'https://www.figma.com/api/mcp/asset/b2b40199-ad8b-41c1-8730-96a0feef5c6d',
+];
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
   const [history, setHistory] = useState([]);
-  const [savedRoutes, setSavedRoutes] = useState([]);
-  const [reflections, setReflections] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,31 +51,16 @@ export default function ProfileScreen() {
   async function fetchProfileData() {
     setLoading(true);
     try {
-      const [historyRes, savedRes, reflectionsRes] = await Promise.all([
-        supabase
-          .from('ride_history')
-          .select('*, routes(name)')
-          .eq('user_id', user.id)
-          .order('started_at', { ascending: false })
-          .limit(20),
-        supabase
-          .from('saved_routes')
-          .select('*, routes(name)')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false }),
-        supabase
-          .from('reflections')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(10),
-      ]);
+      const { data } = await supabase
+        .from('ride_history')
+        .select('*, routes(name, image, length_mi)')
+        .eq('user_id', user.id)
+        .order('started_at', { ascending: false })
+        .limit(1);
 
-      setHistory(historyRes.data || []);
-      setSavedRoutes(savedRes.data || []);
-      setReflections(reflectionsRes.data || []);
+      setHistory(data || []);
     } catch (e) {
-      // silently handle — data just won't show
+      // silently handle
     } finally {
       setLoading(false);
     }
@@ -55,108 +69,345 @@ export default function ProfileScreen() {
   if (!user) {
     return (
       <SafeAreaView style={styles.container}>
-        <Text style={styles.title}>Your Profile</Text>
-        <Text style={styles.signInPrompt}>Sign in to see your ride history and saved routes.</Text>
+        <View style={styles.headerWrap}>
+          <Text style={styles.headerTitle}>Profile</Text>
+        </View>
+        <View style={styles.contentPadding}>
+          <Text style={styles.signInPrompt}>Sign in to see your profile.</Text>
+          <Pressable style={styles.submitBtn} onPress={() => router.push('/auth')}>
+            <Text style={styles.submitBtnText}>Sign In</Text>
+          </Pressable>
+        </View>
       </SafeAreaView>
     );
   }
 
+  const latestRide = history[0];
+
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Your Profile</Text>
-      <Text style={styles.email}>{user.email}</Text>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+        
+        {/* Title and Settings */}
+        <View style={styles.headerWrap}>
+          <Text style={styles.headerTitle}>Profile</Text>
+          <Pressable onPress={signOut}>
+            <Ionicons name="menu" size={32} color="black" />
+          </Pressable>
+        </View>
 
-      <Pressable style={styles.signOutButton} onPress={signOut}>
-        <Text style={styles.signOutText}>Sign Out</Text>
-      </Pressable>
-
-      {loading ? (
-        <ActivityIndicator size="large" color="#2D6A4F" style={styles.loader} />
-      ) : (
-        <>
-          <Text style={styles.sectionTitle}>Ride History</Text>
-          <FlatList
-            data={history}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <View style={styles.historyItem}>
-                <View>
-                  <Text style={styles.routeName}>{item.routes?.name || 'Free Ride'}</Text>
-                  {item.distance != null && (
-                    <Text style={styles.stat}>{item.distance} mi · {item.calories || 0} cal</Text>
-                  )}
-                </View>
-                <Text style={styles.date}>
-                  {new Date(item.started_at).toLocaleDateString()}
-                </Text>
+        {/* User Info Header */}
+        <View style={styles.userInfoRow}>
+          <Image source={{ uri: MOCK_USER.avatar }} style={styles.avatar} />
+          <View style={styles.userStatsCol}>
+            <Text style={styles.userName}>{MOCK_USER.name}</Text>
+            <Text style={styles.ridesCompletedText}>{MOCK_USER.ridesCompleted} Rides Completed</Text>
+            <View style={styles.progressContainer}>
+              <View style={styles.progressBarBg} />
+              <View style={[styles.progressBarFill, { width: '65%' }]} />
+            </View>
+            <View style={styles.badgesRow}>
+              <View style={styles.statItem}>
+                <Text style={styles.statVal}>{MOCK_USER.friends}</Text>
+                <Text style={styles.statLab}>Friends</Text>
               </View>
-            )}
-            contentContainerStyle={styles.list}
-            ListEmptyComponent={<Text style={styles.empty}>No rides yet</Text>}
-            scrollEnabled={false}
+              <View style={styles.statItem}>
+                <Image 
+                  source={{ uri: 'https://www.figma.com/api/mcp/asset/f5ad9c9a-2021-4288-970c-e8b4816116fa' }} 
+                  style={styles.rankIcon} 
+                />
+                <Text style={styles.statLab}>{MOCK_USER.rank}</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.divider} />
+
+        {/* Recently Completed Section */}
+        <Text style={styles.sectionTitle}>Recently Completed</Text>
+        
+        <View style={styles.recentRideCard}>
+          <View style={styles.cardHeader}>
+             <Ionicons name="chevron-back" size={20} color="black" />
+             <Text style={styles.cardDate}>Today (5/2)</Text>
+          </View>
+
+          <View style={styles.rideInfoBox}>
+            <Image 
+              source={{ uri: latestRide?.routes?.image || 'https://images.unsplash.com/photo-1517649763962-0c623066013b?w=600&q=70' }} 
+              style={styles.rideImage} 
+            />
+            <View style={styles.rideDetailCol}>
+              <View style={styles.rideNameRow}>
+                <Text style={styles.rideName}>{latestRide?.routes?.name || 'Gayley Ave Loop'}</Text>
+                <View style={styles.distBadge}>
+                  <Text style={styles.distBadgeText}>5k</Text>
+                </View>
+              </View>
+              <View style={styles.starsRow}>
+                {[1,2,3,4,5].map(n => <Ionicons key={n} name="star" size={12} color="#43cac6" />)}
+              </View>
+              <Text style={styles.rideMeta}>
+                {latestRide?.distance || '3.45'} mi - 234 ft - About 1 hour
+              </Text>
+              <Text style={styles.rideLocation}>location start - end</Text>
+            </View>
+          </View>
+
+          <View style={styles.statsRow}>
+            <View style={styles.statBox}>
+              <Text style={styles.statValue}>5.67</Text>
+              <Text style={styles.statLabel}>Distance(mi)</Text>
+            </View>
+            <View style={styles.statBox}>
+              <Text style={styles.statValue}>00:37:21</Text>
+              <Text style={styles.statLabel}>Time</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Action Buttons */}
+        <Pressable style={styles.menuItem}>
+          <Text style={styles.menuItemText}>My Ride History</Text>
+          <Ionicons name="chevron-forward" size={20} color="#ccc" />
+        </Pressable>
+
+        <View style={styles.divider} />
+
+        {/* Create Route Section */}
+        <View style={styles.createRouteCard}>
+          <View style={styles.createRouteContent}>
+            <Text style={styles.createRouteTitle}>Create Route</Text>
+            <Text style={styles.createRouteDesc}>
+              Create your own biking route. I really like biking and it is very fun to do with the family.
+            </Text>
+          </View>
+          <Image 
+            source={{ uri: 'https://www.figma.com/api/mcp/asset/064f51d9-2ce5-4f89-acaa-50eeac76a725' }} 
+            style={styles.createRouteArt} 
           />
+          <View style={styles.plusCircle}>
+            <Ionicons name="add" size={32} color="white" />
+          </View>
+        </View>
 
-          {savedRoutes.length > 0 && (
-            <>
-              <Text style={styles.sectionTitle}>Saved Routes</Text>
-              {savedRoutes.map((s) => (
-                <View key={s.id} style={styles.savedItem}>
-                  <Text style={styles.routeName}>{s.routes?.name}</Text>
-                </View>
-              ))}
-            </>
-          )}
+        <Pressable style={styles.menuItem}>
+          <Text style={styles.menuItemText}>Created Routes</Text>
+          <Ionicons name="chevron-forward" size={20} color="#ccc" />
+        </Pressable>
 
-          {reflections.length > 0 && (
-            <>
-              <Text style={styles.sectionTitle}>Reflections</Text>
-              {reflections.map((r) => (
-                <View key={r.id} style={styles.reflectionItem}>
-                  <Text style={styles.reflectionText}>{r.text}</Text>
-                  <Text style={styles.date}>
-                    {new Date(r.created_at).toLocaleDateString()}
-                  </Text>
-                </View>
-              ))}
-            </>
-          )}
-        </>
-      )}
+        <View style={styles.divider} />
+
+        {/* Photo Gallery Section */}
+        <Text style={styles.sectionTitle}>Photo Gallery</Text>
+        <View style={styles.photoGrid}>
+          {PHOTO_GALLERY.map((uri, idx) => (
+            <Image key={idx} source={{ uri }} style={styles.galleryImg} />
+          ))}
+          <View style={[styles.galleryImg, styles.morePhotos]}>
+            <Text style={styles.morePhotosText}>+ 23</Text>
+          </View>
+        </View>
+
+        <View style={{ height: 120 }} />
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  title: { fontSize: 24, fontWeight: 'bold', padding: 16, color: '#1B4332' },
-  email: { paddingHorizontal: 16, fontSize: 14, color: '#666', marginBottom: 8 },
-  signInPrompt: { padding: 16, fontSize: 16, color: '#666' },
-  signOutButton: {
-    marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    alignItems: 'center',
-  },
-  signOutText: { color: '#666', fontSize: 14 },
-  sectionTitle: { fontSize: 18, fontWeight: '600', paddingHorizontal: 16, paddingTop: 8, color: '#2D6A4F' },
-  list: { padding: 16 },
-  historyItem: {
+  scroll: { paddingBottom: 20 },
+  contentPadding: { paddingHorizontal: 25 },
+  
+  headerWrap: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    paddingHorizontal: 25,
+    paddingVertical: 15,
   },
-  routeName: { fontSize: 16, color: '#333' },
-  stat: { fontSize: 12, color: '#888', marginTop: 2 },
-  date: { fontSize: 14, color: '#888' },
-  empty: { color: '#888', textAlign: 'center' },
-  savedItem: { paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  reflectionItem: { paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  reflectionText: { fontSize: 14, color: '#333', marginBottom: 4 },
+  headerTitle: { fontSize: 30, fontWeight: '700', color: '#000' },
+  
+  userInfoRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 25,
+    paddingVertical: 10,
+    gap: 20,
+    alignItems: 'center',
+  },
+  avatar: {
+    width: 122,
+    height: 122,
+    borderRadius: 61,
+    backgroundColor: '#eee',
+  },
+  userStatsCol: { flex: 1 },
+  userName: { fontSize: 20, fontWeight: '700', color: '#000', marginBottom: 4 },
+  ridesCompletedText: { fontSize: 11, color: '#b0b0b0', marginBottom: 8 },
+  progressContainer: {
+    height: 10,
+    width: 122,
+    borderRadius: 8,
+    backgroundColor: '#d3d4db',
+    overflow: 'hidden',
+    marginBottom: 15,
+  },
+  progressBarBg: { ...StyleSheet.absoluteFillObject },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: '#f85057',
+    borderRadius: 8,
+  },
+  badgesRow: { flexDirection: 'row', gap: 20, alignItems: 'center' },
+  statItem: { alignItems: 'center' },
+  statVal: { fontSize: 20, color: '#000' },
+  statLab: { fontSize: 11, color: '#b0b0b0' },
+  rankIcon: { width: 32, height: 32, marginBottom: 2 },
+
+  divider: {
+    height: 1,
+    backgroundColor: '#eee',
+    marginHorizontal: 25,
+    marginVertical: 25,
+  },
+
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#000',
+    paddingHorizontal: 25,
+    marginBottom: 15,
+  },
+
+  recentRideCard: {
+    marginHorizontal: 25,
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#ececec',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 4,
+    marginBottom: 20,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 15,
+    position: 'relative',
+  },
+  cardDate: { fontSize: 16, color: '#000' },
+  
+  rideInfoBox: {
+    backgroundColor: '#f3f4f8',
+    borderRadius: 16,
+    flexDirection: 'row',
+    overflow: 'hidden',
+    marginBottom: 15,
+  },
+  rideImage: { width: 94, height: 92 },
+  rideDetailCol: { flex: 1, padding: 8, paddingLeft: 12 },
+  rideNameRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  rideName: { fontSize: 13, fontWeight: '700', color: '#000' },
+  distBadge: {
+    backgroundColor: '#f85057',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  distBadgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  starsRow: { flexDirection: 'row', gap: 2, marginVertical: 4 },
+  rideMeta: { fontSize: 10, color: '#787985' },
+  rideLocation: { fontSize: 10, color: '#787985', marginTop: 2 },
+
+  statsRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 10 },
+  statBox: { alignItems: 'flex-start' },
+  statValue: { fontSize: 12, fontWeight: '700', color: '#000' },
+  statLabel: { fontSize: 12, color: '#000' },
+
+  menuItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginHorizontal: 25,
+    paddingHorizontal: 20,
+    height: 49,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    marginBottom: 10,
+  },
+  menuItemText: { fontSize: 16, color: '#000' },
+
+  createRouteCard: {
+    marginHorizontal: 25,
+    height: 184,
+    borderRadius: 24,
+    backgroundColor: '#9fe4e1',
+    overflow: 'hidden',
+    flexDirection: 'row',
+    marginBottom: 20,
+    position: 'relative',
+  },
+  createRouteContent: { flex: 1, padding: 25, zIndex: 2 },
+  createRouteTitle: { fontSize: 30, fontWeight: '700', color: '#000', marginBottom: 10 },
+  createRouteDesc: { fontSize: 12, color: '#000', lineHeight: 20, width: '80%' },
+  createRouteArt: {
+    position: 'absolute',
+    bottom: -10,
+    right: -10,
+    width: 214,
+    height: 214,
+    opacity: 0.85,
+  },
+  plusCircle: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    backgroundColor: '#f85057',
+    width: 47,
+    height: 47,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 3,
+  },
+
+  photoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    paddingHorizontal: 25,
+  },
+  galleryImg: {
+    width: (SCREEN_W - 70) / 3,
+    height: 107,
+    borderRadius: 16,
+    backgroundColor: '#eee',
+  },
+  morePhotos: {
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  morePhotosText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+
+  signInPrompt: { fontSize: 16, color: '#666', marginVertical: 40, textAlign: 'center' },
+  submitBtn: {
+    backgroundColor: '#f85057',
+    borderRadius: 20,
+    height: 54,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  submitBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   loader: { marginTop: 40 },
 });
