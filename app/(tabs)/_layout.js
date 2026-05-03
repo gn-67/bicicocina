@@ -32,6 +32,7 @@ export default function TabLayout() {
         name="kitchen"
         options={{
           title: 'Kitchen',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="bicycle-outline" size={size} color={color} />
           ),
