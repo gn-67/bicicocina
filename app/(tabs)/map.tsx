@@ -3,9 +3,11 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import MapView from '../../components/MapView';
+import PartnerSheet from '../../components/PartnerSheet';
 import RouteDetailSheet from '../../components/RouteDetailSheet';
 import SafeRouteCard from '../../components/SafeRouteCard';
 import SearchBar from '../../components/SearchBar';
+import type { Partner } from '../../data/partners';
 import { debounce, geocodeQuery } from '../../lib/geocoding';
 import { findOrGenerateRoute } from '../../lib/routing';
 import type { GeocodeSuggestion, Route, RouteResult } from '../../lib/types';
@@ -13,25 +15,20 @@ import type { GeocodeSuggestion, Route, RouteResult } from '../../lib/types';
 const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? '';
 
 export default function MapScreen() {
-  // Community route sheet (tapping existing route lines)
   const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
+  const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
 
-  // Search state
   const [searchExpanded, setSearchExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<GeocodeSuggestion[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
-  // Safe route state
   const [safeRoute, setSafeRoute] = useState<RouteResult | null>(null);
   const [routeLoading, setRouteLoading] = useState(false);
   const [routeError, setRouteError] = useState<string | null>(null);
 
-  // Abort controller ref for geocoding
   const geocodeAbort = useRef<AbortController | null>(null);
 
-  // Debounced geocode — recreated once (stable ref not needed; function is recreated on each render
-  // but debounce state lives in the closure — wrap in useCallback to stabilise)
   const debouncedGeocode = useCallback(
     debounce(async (query: string) => {
       if (!query.trim()) { setSuggestions([]); setLoadingSuggestions(false); return; }
@@ -61,7 +58,8 @@ export default function MapScreen() {
     setSearchQuery(s.name);
     setRouteError(null);
     setRouteLoading(true);
-    setSelectedRoute(null); // hide community route sheet while routing
+    setSelectedRoute(null);
+    setSelectedPartner(null);
 
     const response = await findOrGenerateRoute(s);
     setRouteLoading(false);
@@ -97,17 +95,28 @@ export default function MapScreen() {
   return (
     <View style={styles.container}>
       <MapView
-        onRouteTap={safeRoute ? undefined : setSelectedRoute}
+        onRouteTap={route => {
+          setSelectedPartner(null);
+          setSelectedRoute(route);
+        }}
+        onPartnerTap={partner => {
+          setSelectedRoute(null);
+          setSelectedPartner(partner);
+        }}
         safeRoute={safeRoute}
       />
 
-      {/* Community route detail sheet — hidden while safe route is active */}
-      {!safeRoute && (
-        <RouteDetailSheet
-          route={selectedRoute}
-          onClose={() => setSelectedRoute(null)}
-        />
-      )}
+      {/* Community route detail sheet */}
+      <RouteDetailSheet
+        route={selectedRoute}
+        onClose={() => setSelectedRoute(null)}
+      />
+
+      {/* Partner info sheet */}
+      <PartnerSheet
+        partner={selectedPartner}
+        onClose={() => setSelectedPartner(null)}
+      />
 
       {/* Safe route summary card */}
       <SafeRouteCard
@@ -134,7 +143,6 @@ export default function MapScreen() {
           onSelectSuggestion={handleSelectSuggestion}
         />
 
-        {/* Routing spinner */}
         {routeLoading && (
           <View style={styles.routingBanner}>
             <ActivityIndicator size="small" color="#40c9c4" />
@@ -142,7 +150,6 @@ export default function MapScreen() {
           </View>
         )}
 
-        {/* Error banner */}
         {routeError && !routeLoading && (
           <View style={styles.errorBanner}>
             <Text style={styles.errorText}>{routeError}</Text>

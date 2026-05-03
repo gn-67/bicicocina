@@ -6,6 +6,7 @@ import Mapbox, {
   LineLayer,
   MapView as MapboxMap,
   MarkerView,
+  PointAnnotation,
   ShapeSource,
 } from '@rnmapbox/maps';
 import { bbox } from '@turf/turf';
@@ -18,9 +19,14 @@ type OnPressEvent = {
   point: { x: number; y: number };
 };
 
-import seedRoutesData from '../data/routes.json';
-import { bikeways, potholes } from '../lib/data';
+import rawPotholes from '../data/potholes.json';
+import bikelanes from '../data/bikelanes-la.json';
 import type { Pothole, Route, RouteResult } from '../lib/types';
+import { bikeways, potholes } from '../lib/data';
+import seedRoutes from '../data/routes.json';
+import curatedRoutes from '../data/curated-routes.json';
+import { PARTNERS } from '../data/partners';
+import type { Partner } from '../data/partners';
 
 const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
 const KITCHEN_CENTER: [number, number] = [-118.2871, 34.0928];
@@ -63,7 +69,7 @@ function safeRouteColor(score: number): string {
 // ── Types ─────────────────────────────────────────────────────────────────────
 type Props = {
   onRouteTap?: (route: Route) => void;
-  safeRoute?: RouteResult | null;
+  onPartnerTap?: (partner: Partner) => void;
 };
 
 type SelectedPothole = {
@@ -71,10 +77,10 @@ type SelectedPothole = {
   props: Pothole;
 };
 
-// ── Component ─────────────────────────────────────────────────────────────────
-export default function MapView({ onRouteTap, safeRoute }: Props) {
+// ─── Component ───────────────────────────────────────────────────────────────
+export default function MapView({ onRouteTap, onPartnerTap }: Props) {
   const [routes, setRoutes] = useState<GeoJSON.FeatureCollection>(
-    seedRoutesData as GeoJSON.FeatureCollection,
+    seedRoutes as GeoJSON.FeatureCollection,
   );
   const [selectedPothole, setSelectedPothole] = useState<SelectedPothole | null>(null);
 
@@ -296,6 +302,51 @@ export default function MapView({ onRouteTap, safeRoute }: Props) {
           </View>
         </MarkerView>
       )}
+
+      {/* Curated routes — green, always visible, tappable */}
+      <ShapeSource
+        id="curated-routes-src"
+        shape={curatedRoutes as GeoJSON.FeatureCollection}
+        hitbox={{ width: 20, height: 20 }}
+        onPress={handleRoutePress}
+      >
+        <LineLayer
+          id="curated-routes-glow"
+          slot="top"
+          style={{
+            lineColor: '#22c55e',
+            lineWidth: 10,
+            lineBlur: 8,
+            lineOpacity: 0.4,
+            lineCap: 'round',
+            lineJoin: 'round',
+          }}
+        />
+        <LineLayer
+          id="curated-routes-sharp"
+          slot="top"
+          style={{
+            lineColor: '#16a34a',
+            lineWidth: 4,
+            lineCap: 'round',
+            lineJoin: 'round',
+          }}
+        />
+      </ShapeSource>
+
+      {/* Partner location markers — single child required by PointAnnotation */}
+      {PARTNERS.map(partner => (
+        <PointAnnotation
+          key={partner.id}
+          id={partner.id}
+          coordinate={partner.coordinates}
+          onSelected={() => onPartnerTap?.(partner)}
+        >
+          <View style={styles.markerBubble}>
+            <Text style={styles.markerEmoji}>🚲</Text>
+          </View>
+        </PointAnnotation>
+      ))}
     </MapboxMap>
   );
 }
@@ -339,5 +390,23 @@ const styles = StyleSheet.create({
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
     borderTopColor: '#fff',
+  },
+  markerBubble: {
+    backgroundColor: '#1d1933',
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  markerEmoji: {
+    fontSize: 20,
   },
 });
