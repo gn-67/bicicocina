@@ -19,14 +19,12 @@ type OnPressEvent = {
   point: { x: number; y: number };
 };
 
-import rawPotholes from '../data/potholes.json';
-import bikelanes from '../data/bikelanes-la.json';
-import type { Pothole, Route, RouteResult } from '../lib/types';
-import { bikeways, potholes } from '../lib/data';
-import seedRoutes from '../data/routes.json';
+import seedRoutesData from '../data/routes.json';
 import curatedRoutes from '../data/curated-routes.json';
 import { PARTNERS } from '../data/partners';
 import type { Partner } from '../data/partners';
+import { bikeways, potholes } from '../lib/data';
+import type { Pothole, Route, RouteResult } from '../lib/types';
 
 const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
 const KITCHEN_CENTER: [number, number] = [-118.2871, 34.0928];
@@ -49,7 +47,6 @@ const glowWidthExpr: unknown[] = [
 ];
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
 
-// ── Relative date helper ──────────────────────────────────────────────────────
 function relativeDate(iso: string): string {
   const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
   if (days === 0) return 'today';
@@ -70,6 +67,7 @@ function safeRouteColor(score: number): string {
 type Props = {
   onRouteTap?: (route: Route) => void;
   onPartnerTap?: (partner: Partner) => void;
+  safeRoute?: RouteResult | null;
 };
 
 type SelectedPothole = {
@@ -77,14 +75,13 @@ type SelectedPothole = {
   props: Pothole;
 };
 
-// ─── Component ───────────────────────────────────────────────────────────────
-export default function MapView({ onRouteTap, onPartnerTap }: Props) {
+// ── Component ─────────────────────────────────────────────────────────────────
+export default function MapView({ onRouteTap, onPartnerTap, safeRoute }: Props) {
   const [routes, setRoutes] = useState<GeoJSON.FeatureCollection>(
-    seedRoutes as GeoJSON.FeatureCollection,
+    seedRoutesData as GeoJSON.FeatureCollection,
   );
   const [selectedPothole, setSelectedPothole] = useState<SelectedPothole | null>(null);
 
-  // Camera bounds — fit to safe route when active, otherwise use default center
   const cameraProps = useMemo(() => {
     if (!safeRoute) return null;
     const [minLng, minLat, maxLng, maxLat] = bbox({
@@ -102,7 +99,6 @@ export default function MapView({ onRouteTap, onPartnerTap }: Props) {
     };
   }, [safeRoute]);
 
-  // Safe route as a FeatureCollection for ShapeSource
   const safeRouteFC = useMemo<GeoJSON.FeatureCollection | null>(() => {
     if (!safeRoute) return null;
     return {
@@ -148,7 +144,6 @@ export default function MapView({ onRouteTap, onPartnerTap }: Props) {
 
   const handleRoutePress = (e: OnPressEvent) => {
     const feat = e.features?.[0];
-    // Guard: community routes have 'active_riders'; potholes have 'casenumber'
     if (!feat || (feat.properties as Record<string, unknown>)?.casenumber) return;
     if (onRouteTap) onRouteTap(feat.properties as unknown as Route);
   };
@@ -227,83 +222,7 @@ export default function MapView({ onRouteTap, onPartnerTap }: Props) {
         />
       </ShapeSource>
 
-      {/* 3. Safe route — above community routes, below potholes */}
-      {safeRouteFC && (
-        <ShapeSource id="safe-route-src" shape={safeRouteFC}>
-          <LineLayer
-            id="safe-route-glow"
-            slot="top"
-            style={{
-              lineColor: routeColor,
-              lineWidth: 10,
-              lineBlur: 6,
-              lineOpacity: 0.45,
-              lineCap: 'round',
-              lineJoin: 'round',
-            }}
-          />
-          <LineLayer
-            id="safe-route-sharp"
-            slot="top"
-            style={{
-              lineColor: routeColor,
-              lineWidth: 6,
-              lineCap: 'round',
-              lineJoin: 'round',
-            }}
-          />
-        </ShapeSource>
-      )}
-
-      {/* 4. Pothole hazard layer — sits on top so riders see them clearly.
-          minZoomLevel prevents thousands of dots at city scale.
-          TODO: add clustering once real data confirms density. */}
-      <ShapeSource
-        id="potholes-src"
-        shape={potholes}
-        hitbox={{ width: 20, height: 20 }}
-        onPress={handlePotholePress}
-      >
-        <CircleLayer
-          id="potholes-circle"
-          slot="top"
-          minZoomLevel={12}
-          style={{
-            circleRadius: 5,
-            circleColor: '#dc2626',
-            circleStrokeWidth: 1,
-            circleStrokeColor: '#ffffff',
-          }}
-        />
-      </ShapeSource>
-
-      {/* 5. Pothole popup */}
-      {selectedPothole && (
-        <MarkerView
-          coordinate={selectedPothole.coords}
-          anchor={{ x: 0.5, y: 1.15 }}
-          allowOverlap
-        >
-          <View style={styles.popup}>
-            <View style={styles.popupHeader}>
-              <Text style={styles.popupTitle}>⚠ Pothole reported</Text>
-              <Pressable onPress={() => setSelectedPothole(null)} hitSlop={8}>
-                <Text style={styles.popupClose}>×</Text>
-              </Pressable>
-            </View>
-            <Text style={styles.popupDate}>{relativeDate(selectedPothole.props.createddate)}</Text>
-            <Text style={styles.popupStatus}>{selectedPothole.props.status}</Text>
-            {selectedPothole.props.address ? (
-              <Text style={styles.popupAddress} numberOfLines={2}>
-                {selectedPothole.props.address}
-              </Text>
-            ) : null}
-            <View style={styles.popupCaret} />
-          </View>
-        </MarkerView>
-      )}
-
-      {/* Curated routes — green, always visible, tappable */}
+      {/* 3. Curated routes — always-visible green lines from main branch */}
       <ShapeSource
         id="curated-routes-src"
         shape={curatedRoutes as GeoJSON.FeatureCollection}
@@ -334,7 +253,57 @@ export default function MapView({ onRouteTap, onPartnerTap }: Props) {
         />
       </ShapeSource>
 
-      {/* Partner location markers — single child required by PointAnnotation */}
+      {/* 4. Safe route — above community routes, below potholes */}
+      {safeRouteFC && (
+        <ShapeSource id="safe-route-src" shape={safeRouteFC}>
+          <LineLayer
+            id="safe-route-glow"
+            slot="top"
+            style={{
+              lineColor: routeColor,
+              lineWidth: 10,
+              lineBlur: 6,
+              lineOpacity: 0.45,
+              lineCap: 'round',
+              lineJoin: 'round',
+            }}
+          />
+          <LineLayer
+            id="safe-route-sharp"
+            slot="top"
+            style={{
+              lineColor: routeColor,
+              lineWidth: 6,
+              lineCap: 'round',
+              lineJoin: 'round',
+            }}
+          />
+        </ShapeSource>
+      )}
+
+      {/* 5. Pothole hazard layer — potholes from lib/data (sanitized potholes.json).
+          minZoomLevel prevents thousands of dots blanketing the map at city scale.
+          TODO: add clustering once real data confirms density. */}
+      <ShapeSource
+        id="potholes-src"
+        shape={potholes}
+        hitbox={{ width: 20, height: 20 }}
+        onPress={handlePotholePress}
+      >
+        <CircleLayer
+          id="potholes-circle"
+          slot="top"
+          minZoomLevel={12}
+          style={{
+            circleRadius: 5,
+            circleColor: '#dc2626',
+            circleStrokeWidth: 1,
+            circleStrokeColor: '#ffffff',
+          }}
+        />
+      </ShapeSource>
+
+      {/* 6. Partner location markers from main branch */}
       {PARTNERS.map(partner => (
         <PointAnnotation
           key={partner.id}
@@ -347,11 +316,36 @@ export default function MapView({ onRouteTap, onPartnerTap }: Props) {
           </View>
         </PointAnnotation>
       ))}
+
+      {/* 7. Pothole tap popup */}
+      {selectedPothole && (
+        <MarkerView
+          coordinate={selectedPothole.coords}
+          anchor={{ x: 0.5, y: 1.15 }}
+          allowOverlap
+        >
+          <View style={styles.popup}>
+            <View style={styles.popupHeader}>
+              <Text style={styles.popupTitle}>⚠ Pothole reported</Text>
+              <Pressable onPress={() => setSelectedPothole(null)} hitSlop={8}>
+                <Text style={styles.popupClose}>×</Text>
+              </Pressable>
+            </View>
+            <Text style={styles.popupDate}>{relativeDate(selectedPothole.props.createddate)}</Text>
+            <Text style={styles.popupStatus}>{selectedPothole.props.status}</Text>
+            {selectedPothole.props.address ? (
+              <Text style={styles.popupAddress} numberOfLines={2}>
+                {selectedPothole.props.address}
+              </Text>
+            ) : null}
+            <View style={styles.popupCaret} />
+          </View>
+        </MarkerView>
+      )}
     </MapboxMap>
   );
 }
 
-// ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   map: { flex: 1 },
   fallback: {
@@ -359,6 +353,22 @@ const styles = StyleSheet.create({
   },
   fallbackTitle: { fontSize: 18, fontWeight: '600', color: '#1f2937', marginBottom: 8 },
   fallbackBody: { fontSize: 14, color: '#6b7280', textAlign: 'center' },
+  markerBubble: {
+    backgroundColor: '#1d1933',
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  markerEmoji: { fontSize: 20 },
   popup: {
     backgroundColor: '#fff',
     borderRadius: 10,
@@ -390,23 +400,5 @@ const styles = StyleSheet.create({
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
     borderTopColor: '#fff',
-  },
-  markerBubble: {
-    backgroundColor: '#1d1933',
-    borderRadius: 20,
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  markerEmoji: {
-    fontSize: 20,
   },
 });
