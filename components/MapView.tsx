@@ -109,32 +109,6 @@ type SelectedPothole = {
 };
 
 // ─── Component ───────────────────────────────────────────────────────────────
-export default function MapView({ onRouteTap }: Props) {
-type ShapePressEvent = {
-  features: Array<GeoJSON.Feature>;
-  coordinates: { latitude: number; longitude: number };
-  point: { x: number; y: number };
-};
-
-const sharpWidthExpr: any = [
-  'interpolate',
-  ['linear'],
-  ['get', 'active_riders'],
-  0, 2,
-  50, 6,
-];
-
-const glowWidthExpr: any = [
-  'interpolate',
-  ['linear'],
-  ['get', 'active_riders'],
-  0, 4,
-  50, 12,
-];
-
-const clamp = (n: number, lo: number, hi: number) =>
-  Math.max(lo, Math.min(hi, n));
-
 export default function MapView({ onRouteTap, onPartnerTap }: Props) {
   const [routes, setRoutes] = useState<GeoJSON.FeatureCollection>(
     seedRoutes as GeoJSON.FeatureCollection
