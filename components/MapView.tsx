@@ -11,6 +11,7 @@ import { useFocusEffect } from 'expo-router';
 
 import bikelanes from '../data/bikelanes-la.json';
 import seedRoutes from '../data/routes.json';
+import curatedRoutes from '../data/curated-routes.json';
 import { PARTNERS } from '../data/partners';
 import type { Partner } from '../data/partners';
 import type { Route } from '../lib/types';
@@ -165,6 +166,37 @@ export default function MapView({ onRouteTap, onPartnerTap }: Props) {
           style={{
             lineColor: '#60a5fa',
             lineWidth: sharpWidthExpr,
+            lineCap: 'round',
+            lineJoin: 'round',
+          }}
+        />
+      </ShapeSource>
+
+      {/* Curated routes — green, always visible, tappable */}
+      <ShapeSource
+        id="curated-routes-src"
+        shape={curatedRoutes as GeoJSON.FeatureCollection}
+        hitbox={{ width: 20, height: 20 }}
+        onPress={handleRoutePress}
+      >
+        <LineLayer
+          id="curated-routes-glow"
+          slot="top"
+          style={{
+            lineColor: '#22c55e',
+            lineWidth: 10,
+            lineBlur: 8,
+            lineOpacity: 0.4,
+            lineCap: 'round',
+            lineJoin: 'round',
+          }}
+        />
+        <LineLayer
+          id="curated-routes-sharp"
+          slot="top"
+          style={{
+            lineColor: '#16a34a',
+            lineWidth: 4,
             lineCap: 'round',
             lineJoin: 'round',
           }}
