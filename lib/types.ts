@@ -4,6 +4,13 @@ export type BikewayProperties = {
   BIKEWAY_TYPE: BikewayClass;
 };
 
+export type Pothole = {
+  casenumber: string;
+  status: string;
+  createddate: string;
+  address?: string;
+};
+
 export type Route = {
   id: string;
   name: string;
