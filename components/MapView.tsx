@@ -1,5 +1,12 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Mapbox, {
   Camera,
@@ -347,23 +354,29 @@ export default function MapView({ onRouteTap, onPartnerTap, safeRoute }: Props) 
 
       {/* 7. Partner location markers from main branch */}
       {PARTNERS.map(partner => (
-        <PointAnnotation
+        <MarkerView
           key={partner.id}
-          id={partner.id}
           coordinate={partner.coordinates}
-          onSelected={() => onPartnerTap?.(partner)}
+          anchor={{ x: 0.5, y: 0.5 }}
         >
-          <View style={styles.markerBubble}>
-            <Text style={styles.markerEmoji}>🚲</Text>
-          </View>
-        </PointAnnotation>
+          <Pressable
+            onPress={() => onPartnerTap?.(partner)}
+            style={[styles.markerBubble, partner.logo && { backgroundColor: '#fff' }]}
+          >
+            {partner.logo ? (
+              <Image source={{ uri: partner.logo }} style={styles.markerLogo} />
+            ) : (
+              <Text style={styles.markerEmoji}>🚲</Text>
+            )}
+          </Pressable>
+        </MarkerView>
       ))}
 
       {/* 7. Pothole tap popup */}
       {selectedPothole && (
         <MarkerView
           coordinate={selectedPothole.coords}
-          anchor={{ x: 0.5, y: 1.15 }}
+          anchor={{ x: 0.5, y: 1.0 }}
           allowOverlap
         >
           <View style={styles.popup}>
@@ -422,6 +435,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 4,
+  },
+  markerLogo: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 20,
   },
   markerEmoji: { fontSize: 20 },
   popup: {
