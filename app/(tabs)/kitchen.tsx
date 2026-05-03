@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import ComingSoonTab from '../../components/kitchen/ComingSoonTab';
 import EventsTab from '../../components/kitchen/EventsTab';
+import LearnTab from '../../components/kitchen/LearnTab';
 import MissionTab from '../../components/kitchen/MissionTab';
+import SafetyTab from '../../components/kitchen/SafetyTab';
 import SubtabNav, {
   type KitchenSubtab,
 } from '../../components/kitchen/SubtabNav';
@@ -31,8 +32,8 @@ export default function KitchenScreen() {
         <View style={styles.body}>
           {subtab === 'Mission' && <MissionTab />}
           {subtab === 'Events' && <EventsTab />}
-          {subtab === 'Learn' && <ComingSoonTab label="Learn" />}
-          {subtab === 'Safety' && <ComingSoonTab label="Safety" />}
+          {subtab === 'Learn' && <LearnTab />}
+          {subtab === 'Safety' && <SafetyTab />}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -47,7 +48,7 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 18,
   },
-  header: { fontSize: 28, color: '#000' },
+  header: { fontSize: 30, fontWeight: '700', color: '#000' },
   navWrap: { paddingHorizontal: HORIZONTAL_PADDING },
   body: {
     paddingHorizontal: HORIZONTAL_PADDING,

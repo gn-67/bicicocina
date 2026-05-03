@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
   pillActive: {
     backgroundColor: '#40c9c4',
     borderWidth: 0.5,
-    borderColor: '#d3d4db',
+    borderColor: '#008883',
   },
   text: {
     fontSize: 12,
