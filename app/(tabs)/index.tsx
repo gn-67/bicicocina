@@ -75,7 +75,7 @@ export default function ExploreScreen() {
 
         <View style={styles.section}>
           <View style={styles.sectionTitleRow}>
-            <Text style={styles.sectionTitleInline}>Easy Routes for You</Text>
+            <Text style={styles.sectionTitleInline}>Routes for You</Text>
           </View>
           <View style={styles.chipsWrap}>
             <FilterChips value={filter} onChange={setFilter} />

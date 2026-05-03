@@ -124,7 +124,7 @@ export default function RouteDetailScreen() {
       {/* ── Header ── */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color="#111" />
+          <Ionicons name="arrow-back" size={24} color="#43CAC6" />
         </Pressable>
         <Text style={styles.headerTitle}>Bike Routes</Text>
       </View>
