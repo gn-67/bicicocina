@@ -15,6 +15,7 @@ import { router } from 'expo-router';
 
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
+import { useLocationToggle } from '../../hooks/useLocationToggle';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
@@ -39,6 +40,7 @@ export default function ProfileScreen() {
   const { user } = useAuth();
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { enabled: locationEnabled, toggle: toggleLocation } = useLocationToggle();
 
   useEffect(() => {
     if (!user) {
@@ -91,9 +93,24 @@ export default function ProfileScreen() {
         {/* Title and Settings */}
         <View style={styles.headerWrap}>
           <Text style={styles.headerTitle}>Profile</Text>
-          <Pressable onPress={() => router.push('/menu')}>
-            <Ionicons name="menu" size={32} color="black" />
-          </Pressable>
+          <View style={styles.headerActions}>
+            {/* Location toggle */}
+            <Pressable
+              onPress={toggleLocation}
+              style={[styles.iconBtn, locationEnabled && styles.iconBtnActive]}
+              hitSlop={8}
+            >
+              <Ionicons
+                name={locationEnabled ? 'location' : 'location-outline'}
+                size={18}
+                color={locationEnabled ? '#fff' : '#9ca3af'}
+              />
+            </Pressable>
+            {/* Menu / waffle */}
+            <Pressable onPress={() => router.push('/menu')} hitSlop={8}>
+              <Ionicons name="menu" size={32} color="black" />
+            </Pressable>
+          </View>
         </View>
 
         {/* User Info Header */}
@@ -229,6 +246,25 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
   },
   headerTitle: { fontSize: 30, fontWeight: '700', color: '#000' },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  iconBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1.5,
+    borderColor: '#e5e5ea',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+  },
+  iconBtnActive: {
+    backgroundColor: '#f97316',
+    borderColor: '#f97316',
+  },
   
   userInfoRow: {
     flexDirection: 'row',
@@ -360,8 +396,8 @@ const styles = StyleSheet.create({
   createRouteDesc: { fontSize: 12, color: '#000', lineHeight: 20, width: '80%' },
   createRouteArt: {
     position: 'absolute',
-    bottom: -10,
-    right: -10,
+    bottom: -40,
+    right: -30,
     width: 214,
     height: 214,
     opacity: 0.85,

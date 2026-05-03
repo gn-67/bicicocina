@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 
 import type { Route } from '../../lib/types';
@@ -14,7 +15,12 @@ type Props = {
 
 export default function ActiveRouteCard({ route, onPress, width }: Props) {
   return (
-    <View style={[styles.card, { width }]}>
+    <LinearGradient
+      colors={['#a2e5f1', '#40c9c4']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 1 }}
+      style={[styles.card, { width }]}
+    >
       <View style={styles.headerRow}>
         <Text style={styles.name} numberOfLines={1}>
           {route.name}
@@ -54,14 +60,13 @@ export default function ActiveRouteCard({ route, onPress, width }: Props) {
           <Text style={styles.viewBtnText}>View Now</Text>
         </Pressable>
       </View>
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#7BD7DC',
-    borderRadius: 15,
+    borderRadius: 24,
     padding: 20,
   },
   headerRow: {
