@@ -36,7 +36,7 @@ const PHOTO_GALLERY = [
 ];
 
 export default function ProfileScreen() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -91,7 +91,7 @@ export default function ProfileScreen() {
         {/* Title and Settings */}
         <View style={styles.headerWrap}>
           <Text style={styles.headerTitle}>Profile</Text>
-          <Pressable onPress={signOut}>
+          <Pressable onPress={() => router.push('/menu')}>
             <Ionicons name="menu" size={32} color="black" />
           </Pressable>
         </View>
@@ -108,15 +108,15 @@ export default function ProfileScreen() {
             </View>
             <View style={styles.badgesRow}>
               <View style={styles.statItem}>
-                <Text style={styles.statVal}>{MOCK_USER.friends}</Text>
-                <Text style={styles.statLab}>Friends</Text>
+                <Text style={statVal}>{MOCK_USER.friends}</Text>
+                <Text style={statLab}>Friends</Text>
               </View>
               <View style={styles.statItem}>
                 <Image 
                   source={{ uri: 'https://www.figma.com/api/mcp/asset/f5ad9c9a-2021-4288-970c-e8b4816116fa' }} 
                   style={styles.rankIcon} 
                 />
-                <Text style={styles.statLab}>{MOCK_USER.rank}</Text>
+                <Text style={statLab}>{MOCK_USER.rank}</Text>
               </View>
             </View>
           </View>
@@ -262,8 +262,6 @@ const styles = StyleSheet.create({
   },
   badgesRow: { flexDirection: 'row', gap: 20, alignItems: 'center' },
   statItem: { alignItems: 'center' },
-  statVal: { fontSize: 20, color: '#000' },
-  statLab: { fontSize: 11, color: '#b0b0b0' },
   rankIcon: { width: 32, height: 32, marginBottom: 2 },
 
   divider: {
@@ -411,3 +409,6 @@ const styles = StyleSheet.create({
   submitBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   loader: { marginTop: 40 },
 });
+
+const statVal = { fontSize: 20, color: '#000' };
+const statLab = { fontSize: 11, color: '#b0b0b0' };
