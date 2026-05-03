@@ -4,12 +4,15 @@ import Mapbox, {
   Camera,
   LineLayer,
   MapView as MapboxMap,
+  PointAnnotation,
   ShapeSource,
 } from '@rnmapbox/maps';
 import { useFocusEffect } from 'expo-router';
 
 import bikelanes from '../data/bikelanes-la.json';
 import seedRoutes from '../data/routes.json';
+import { PARTNERS } from '../data/partners';
+import type { Partner } from '../data/partners';
 import type { Route } from '../lib/types';
 
 const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
@@ -25,6 +28,7 @@ if (MAPBOX_TOKEN) {
 
 type Props = {
   onRouteTap?: (route: Route) => void;
+  onPartnerTap?: (partner: Partner) => void;
 };
 
 type ShapePressEvent = {
@@ -32,16 +36,6 @@ type ShapePressEvent = {
   coordinates: { latitude: number; longitude: number };
   point: { x: number; y: number };
 };
-
-const colorExpr: any = [
-  'interpolate',
-  ['linear'],
-  ['get', 'active_riders'],
-  0, '#9ca3af',
-  10, '#22c55e',
-  25, '#f59e0b',
-  45, '#ef4444',
-];
 
 const sharpWidthExpr: any = [
   'interpolate',
@@ -62,7 +56,7 @@ const glowWidthExpr: any = [
 const clamp = (n: number, lo: number, hi: number) =>
   Math.max(lo, Math.min(hi, n));
 
-export default function MapView({ onRouteTap }: Props) {
+export default function MapView({ onRouteTap, onPartnerTap }: Props) {
   const [routes, setRoutes] = useState<GeoJSON.FeatureCollection>(
     seedRoutes as GeoJSON.FeatureCollection
   );
@@ -176,6 +170,20 @@ export default function MapView({ onRouteTap }: Props) {
           }}
         />
       </ShapeSource>
+
+      {/* Partner location markers — single child required by PointAnnotation */}
+      {PARTNERS.map(partner => (
+        <PointAnnotation
+          key={partner.id}
+          id={partner.id}
+          coordinate={partner.coordinates}
+          onSelected={() => onPartnerTap?.(partner)}
+        >
+          <View style={styles.markerBubble}>
+            <Text style={styles.markerEmoji}>🚲</Text>
+          </View>
+        </PointAnnotation>
+      ))}
     </MapboxMap>
   );
 }
@@ -199,5 +207,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6b7280',
     textAlign: 'center',
+  },
+  markerBubble: {
+    backgroundColor: '#1d1933',
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  markerEmoji: {
+    fontSize: 20,
   },
 });
