@@ -340,8 +340,8 @@ export default function MapView({ onRouteTap, onPartnerTap, safeRoute }: Props) 
         />
       </ShapeSource>
 
-      {/* 6. Route start/end markers */}
-      {routeEndpoints.map(ep => (
+      {/* 6. Route start/end markers — community routes when no safe route active */}
+      {!safeRoute && routeEndpoints.map(ep => (
         <React.Fragment key={ep.id}>
           <MarkerView coordinate={ep.start} anchor={{ x: 0.5, y: 0.5 }} allowOverlap>
             <View style={styles.startMarker} />
@@ -351,6 +351,18 @@ export default function MapView({ onRouteTap, onPartnerTap, safeRoute }: Props) 
           </MarkerView>
         </React.Fragment>
       ))}
+
+      {/* Safe route start/end markers — color matches safety score */}
+      {safeRoute && (
+        <>
+          <MarkerView coordinate={KITCHEN_CENTER} anchor={{ x: 0.5, y: 0.5 }} allowOverlap>
+            <View style={[styles.startMarker, { backgroundColor: routeColor }]} />
+          </MarkerView>
+          <MarkerView coordinate={safeRoute.destCoords} anchor={{ x: 0.5, y: 1.0 }} allowOverlap>
+            <Ionicons name="location" size={30} color={routeColor} />
+          </MarkerView>
+        </>
+      )}
 
       {/* 7. Partner location markers from main branch */}
       {PARTNERS.map(partner => (
