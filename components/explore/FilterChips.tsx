@@ -2,7 +2,18 @@ import React from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-export const FILTER_OPTIONS = ['All', 'Scenic', 'Night', 'Day'] as const;
+export const FILTER_OPTIONS = [
+  'All',
+  'Beginner Friendly',
+  'Bike Paths',
+  'Scenic',
+  'Day',
+  'Night',
+  'LA River',
+  'Short',
+  'Medium',
+  'Long',
+] as const;
 export type FilterOption = (typeof FILTER_OPTIONS)[number];
 
 type Props = {

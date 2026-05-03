@@ -11,7 +11,7 @@
         "length_mi": 1.4,
         "rating": 4.6,
         "beginner_friendly": true,
-        "tags": ["Scenic", "Day"],
+        "tags": ["Scenic", "Day", "Beginner Friendly", "Short"],
         "active_riders": 12,
         "image": "https://images.unsplash.com/photo-1517649763962-0c623066013b?w=600&q=70",
         "start_label": "Today | 1:00 PM",

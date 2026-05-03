@@ -1,5 +1,13 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import Mapbox, {
   Camera,
   CircleLayer,
@@ -35,10 +43,6 @@ const TICK_MS = 3000;
 if (MAPBOX_TOKEN) Mapbox.setAccessToken(MAPBOX_TOKEN);
 
 // ── Expression helpers ────────────────────────────────────────────────────────
-const colorExpr: unknown[] = [
-  'interpolate', ['linear'], ['get', 'active_riders'],
-  0, '#9ca3af', 10, '#22c55e', 25, '#f59e0b', 45, '#ef4444',
-];
 const sharpWidthExpr: unknown[] = [
   'interpolate', ['linear'], ['get', 'active_riders'], 0, 2, 50, 6,
 ];
@@ -77,9 +81,15 @@ type SelectedPothole = {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function MapView({ onRouteTap, onPartnerTap, safeRoute }: Props) {
-  const [routes, setRoutes] = useState<GeoJSON.FeatureCollection>(
-    seedRoutesData as GeoJSON.FeatureCollection,
-  );
+  const [routes, setRoutes] = useState<GeoJSON.FeatureCollection>(() => {
+    const fc = seedRoutesData as GeoJSON.FeatureCollection;
+    return {
+      ...fc,
+      features: fc.features.filter(
+        f => (f.properties as Record<string, unknown>)?.id === 'rt-kitchen-loop',
+      ),
+    };
+  });
   const [selectedPothole, setSelectedPothole] = useState<SelectedPothole | null>(null);
 
   const cameraProps = useMemo(() => {
@@ -106,6 +116,29 @@ export default function MapView({ onRouteTap, onPartnerTap, safeRoute }: Props) 
       features: [{ type: 'Feature', geometry: safeRoute.geometry, properties: {} }],
     };
   }, [safeRoute]);
+
+  // Start/end endpoints for all route lines — computed once, geometry never changes
+  const routeEndpoints = useMemo(() => {
+    const kitchenFc = seedRoutesData as GeoJSON.FeatureCollection;
+    const curatedFc = curatedRoutes as GeoJSON.FeatureCollection;
+    const allFeatures = [
+      ...kitchenFc.features.filter(
+        f => (f.properties as Record<string, unknown>)?.id === 'rt-kitchen-loop',
+      ),
+      ...curatedFc.features,
+    ];
+    return allFeatures.flatMap(feat => {
+      if (feat.geometry?.type !== 'LineString') return [];
+      const coords = (feat.geometry as GeoJSON.LineString).coordinates;
+      if (coords.length < 2) return [];
+      const id = (feat.properties as Record<string, unknown>)?.id as string ?? '';
+      return [{
+        id,
+        start: coords[0] as [number, number],
+        end: coords[coords.length - 1] as [number, number],
+      }];
+    });
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -178,7 +211,7 @@ export default function MapView({ onRouteTap, onPartnerTap, safeRoute }: Props) 
           style={{
             lineColor: [
               'match', ['get', 'class'],
-              1, '#f97316', 2, '#f97316', 3, '#fb923c', 4, '#ea580c', '#f97316',
+              1, '#73EEE9', 2, '#73EEE9', 3, '#73EEE9', 4, '#73EEE9', '#73EEE9',
             ] as unknown as string,
             lineWidth: [
               'match', ['get', 'class'],
@@ -191,10 +224,11 @@ export default function MapView({ onRouteTap, onPartnerTap, safeRoute }: Props) 
         />
       </ShapeSource>
 
-      {/* 2. Community routes */}
+      {/* 2. Community routes — Kitchen Loop only; lineMetrics required for lineGradient */}
       <ShapeSource
         id="routes-src"
         shape={routes}
+        lineMetrics
         hitbox={{ width: 20, height: 20 }}
         onPress={handleRoutePress}
       >
@@ -202,7 +236,7 @@ export default function MapView({ onRouteTap, onPartnerTap, safeRoute }: Props) 
           id="routes-glow"
           slot="top"
           style={{
-            lineColor: colorExpr as unknown as string,
+            lineColor: '#73EEE9',
             lineWidth: glowWidthExpr as unknown as number,
             lineBlur: 6,
             lineOpacity: 0.45,
@@ -214,7 +248,7 @@ export default function MapView({ onRouteTap, onPartnerTap, safeRoute }: Props) 
           id="routes-sharp"
           slot="top"
           style={{
-            lineColor: colorExpr as unknown as string,
+            lineColor: '#2CAFAD',
             lineWidth: sharpWidthExpr as unknown as number,
             lineCap: 'round',
             lineJoin: 'round',
@@ -222,10 +256,11 @@ export default function MapView({ onRouteTap, onPartnerTap, safeRoute }: Props) 
         />
       </ShapeSource>
 
-      {/* 3. Curated routes — always-visible green lines from main branch */}
+      {/* 3. Curated routes — same teal gradient as Kitchen Loop */}
       <ShapeSource
         id="curated-routes-src"
         shape={curatedRoutes as GeoJSON.FeatureCollection}
+        lineMetrics
         hitbox={{ width: 20, height: 20 }}
         onPress={handleRoutePress}
       >
@@ -233,7 +268,7 @@ export default function MapView({ onRouteTap, onPartnerTap, safeRoute }: Props) 
           id="curated-routes-glow"
           slot="top"
           style={{
-            lineColor: '#22c55e',
+            lineColor: '#73EEE9',
             lineWidth: 10,
             lineBlur: 8,
             lineOpacity: 0.4,
@@ -245,7 +280,7 @@ export default function MapView({ onRouteTap, onPartnerTap, safeRoute }: Props) 
           id="curated-routes-sharp"
           slot="top"
           style={{
-            lineColor: '#16a34a',
+            lineColor: '#2CAFAD',
             lineWidth: 4,
             lineCap: 'round',
             lineJoin: 'round',
@@ -295,33 +330,53 @@ export default function MapView({ onRouteTap, onPartnerTap, safeRoute }: Props) 
           slot="top"
           minZoomLevel={12}
           style={{
-            circleRadius: 5,
+            circleRadius: 3,
             circleColor: '#dc2626',
+            circleOpacity: 0.5,
             circleStrokeWidth: 1,
             circleStrokeColor: '#ffffff',
+            circleStrokeOpacity: 0.5,
           }}
         />
       </ShapeSource>
 
-      {/* 6. Partner location markers from main branch */}
+      {/* 6. Route start/end markers */}
+      {routeEndpoints.map(ep => (
+        <React.Fragment key={ep.id}>
+          <MarkerView coordinate={ep.start} anchor={{ x: 0.5, y: 0.5 }} allowOverlap>
+            <View style={styles.startMarker} />
+          </MarkerView>
+          <MarkerView coordinate={ep.end} anchor={{ x: 0.5, y: 1.0 }} allowOverlap>
+            <Ionicons name="location" size={30} color="#f85057" />
+          </MarkerView>
+        </React.Fragment>
+      ))}
+
+      {/* 7. Partner location markers from main branch */}
       {PARTNERS.map(partner => (
-        <PointAnnotation
+        <MarkerView
           key={partner.id}
-          id={partner.id}
           coordinate={partner.coordinates}
-          onSelected={() => onPartnerTap?.(partner)}
+          anchor={{ x: 0.5, y: 0.5 }}
         >
-          <View style={styles.markerBubble}>
-            <Text style={styles.markerEmoji}>🚲</Text>
-          </View>
-        </PointAnnotation>
+          <Pressable
+            onPress={() => onPartnerTap?.(partner)}
+            style={[styles.markerBubble, partner.logo && { backgroundColor: '#fff' }]}
+          >
+            {partner.logo ? (
+              <Image source={{ uri: partner.logo }} style={styles.markerLogo} />
+            ) : (
+              <Text style={styles.markerEmoji}>🚲</Text>
+            )}
+          </Pressable>
+        </MarkerView>
       ))}
 
       {/* 7. Pothole tap popup */}
       {selectedPothole && (
         <MarkerView
           coordinate={selectedPothole.coords}
-          anchor={{ x: 0.5, y: 1.15 }}
+          anchor={{ x: 0.5, y: 1.0 }}
           allowOverlap
         >
           <View style={styles.popup}>
@@ -353,6 +408,19 @@ const styles = StyleSheet.create({
   },
   fallbackTitle: { fontSize: 18, fontWeight: '600', color: '#1f2937', marginBottom: 8 },
   fallbackBody: { fontSize: 14, color: '#6b7280', textAlign: 'center' },
+  startMarker: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#f85057',
+    borderWidth: 2.5,
+    borderColor: '#fff',
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
   markerBubble: {
     backgroundColor: '#1d1933',
     borderRadius: 20,
@@ -367,6 +435,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 4,
+  },
+  markerLogo: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 20,
   },
   markerEmoji: { fontSize: 20 },
   popup: {

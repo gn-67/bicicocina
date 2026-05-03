@@ -6,6 +6,7 @@ export type Partner = {
   address: string;
   coordinates: [number, number]; // [longitude, latitude]
   website?: string;
+  logo?: string;
 };
 
 export const PARTNERS: Partner[] = [
@@ -16,8 +17,9 @@ export const PARTNERS: Partner[] = [
     description:
       'A DIY community bike shop in East Hollywood. Drop in to fix your bike with the help of volunteer mechanics, take a class, or get involved.',
     address: '4429 Fountain Ave, Los Angeles, CA 90029',
-    coordinates: [-118.2871, 34.0928],
+    coordinates: [-118.28627025865836, 34.096029589542695],
     website: 'https://bicyclekitchen.org',
+    logo: 'https://www.figma.com/api/mcp/asset/4b270d21-754f-428d-939c-931fe83bd71d',
   },
   {
     id: 'bike-oven',

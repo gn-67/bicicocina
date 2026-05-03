@@ -15,6 +15,7 @@ import { useAuth } from '../../hooks/useAuth';
 import routesGeoJSON from '../../data/routes.json';
 import curatedRoutesGeoJSON from '../../data/curated-routes.json';
 import bikelanes from '../../data/bikelanes-la.json';
+import { getRouteGallery } from '../../data/route-gallery';
 
 const allLocalFeatures = [
   ...routesGeoJSON.features,
@@ -284,18 +285,35 @@ export default function RouteDetailScreen() {
           )}
 
           {/* ── Photos Section ── */}
-          <View style={styles.photosSection}>
-            <View style={styles.photosGrid}>
-              <View style={styles.photoLarge}>
-                <View style={[styles.photoPlaceholder, { height: 160 }]} />
+          {(() => {
+            const gallery = getRouteGallery(id);
+            return (
+              <View style={styles.photosSection}>
+                <View style={styles.photosGrid}>
+                  <View style={styles.photoLarge}>
+                    <Image
+                      source={{ uri: gallery[0] }}
+                      style={[styles.photoPlaceholder, { height: 160 }]}
+                      resizeMode="cover"
+                    />
+                  </View>
+                  <View style={styles.photoSmallCol}>
+                    <Image
+                      source={{ uri: gallery[1] }}
+                      style={[styles.photoPlaceholder, { height: 78 }]}
+                      resizeMode="cover"
+                    />
+                    <Image
+                      source={{ uri: gallery[2] }}
+                      style={[styles.photoPlaceholder, { height: 78 }]}
+                      resizeMode="cover"
+                    />
+                  </View>
+                </View>
+                <Text style={styles.photosLabel}>See all Photos</Text>
               </View>
-              <View style={styles.photoSmallCol}>
-                <View style={[styles.photoPlaceholder, { height: 78 }]} />
-                <View style={[styles.photoPlaceholder, { height: 78 }]} />
-              </View>
-            </View>
-            <Text style={styles.photosLabel}>See all Photos</Text>
-          </View>
+            );
+          })()}
         </View>
 
         <View style={{ height: insets.bottom + 100 }} />
