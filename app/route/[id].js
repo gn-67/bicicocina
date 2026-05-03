@@ -13,7 +13,13 @@ import { useRoutes } from '../../hooks/useRoutes';
 import { useRatings } from '../../hooks/useRatings';
 import { useAuth } from '../../hooks/useAuth';
 import routesGeoJSON from '../../data/routes.json';
+import curatedRoutesGeoJSON from '../../data/curated-routes.json';
 import bikelanes from '../../data/bikelanes-la.json';
+
+const allLocalFeatures = [
+  ...routesGeoJSON.features,
+  ...curatedRoutesGeoJSON.features,
+];
 
 const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
 if (MAPBOX_TOKEN) Mapbox.setAccessToken(MAPBOX_TOKEN);
@@ -51,9 +57,7 @@ export default function RouteDetailScreen() {
   const [submitting, setSubmitting] = useState(false);
 
   const routeFeature =
-    routesGeoJSON.features.find((f) => f.properties?.id === id) ??
-    routesGeoJSON.features[0] ??
-    null;
+    allLocalFeatures.find((f) => f.properties?.id === id) ?? null;
   const routeLineGeoJSON = routeFeature
     ? { type: 'FeatureCollection', features: [routeFeature] }
     : null;

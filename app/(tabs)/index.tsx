@@ -17,7 +17,7 @@ import FilterChips, {
   type FilterOption,
 } from '../../components/explore/FilterChips';
 import RecommendedRouteCard from '../../components/explore/RecommendedRouteCard';
-import { getActiveRoutes, getRecommendedRoutes } from '../../lib/routes';
+import { getActiveRoutes, getExploreRoutes } from '../../lib/routes';
 import type { Route } from '../../lib/types';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -29,7 +29,7 @@ export default function ExploreScreen() {
   const [filter, setFilter] = useState<FilterOption>('All');
 
   const activeRoutes = useMemo(() => getActiveRoutes(), []);
-  const recommended = useMemo(() => getRecommendedRoutes(filter), [filter]);
+  const recommended = useMemo(() => getExploreRoutes(filter), [filter]);
 
   const handleViewRoute = (route: Route) => {
     router.push(`/route/${route.id}`);
