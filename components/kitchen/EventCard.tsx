@@ -82,7 +82,8 @@ const styles = StyleSheet.create({
   },
   dayName: {
     fontSize: 12,
-    color: '#9596a0',
+    fontWeight: '500',
+    color: '#fff',
     letterSpacing: 1.2,
     marginBottom: 10,
   },
