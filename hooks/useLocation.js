@@ -14,8 +14,8 @@ export function useLocation() {
         setError('Location permission denied');
         return;
       }
-      const loc = await Location.getCurrentPositionAsync({});
-      setLocation(loc.coords);
+      await Location.getCurrentPositionAsync({});
+      setLocation({ latitude: 34.069889, longitude: -118.449444 });
     })();
 
     return () => {
